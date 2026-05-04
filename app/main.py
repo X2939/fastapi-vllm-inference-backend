@@ -16,7 +16,7 @@ client = OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
 app = FastAPI(title="vLLM Demo Backend")
 
 
-class ChatRequest(BaseModel):#用basemodel定义一个类，就能自动校验数据对不对、格式规不规范，不用自己写一堆 if 判断
+class ChatRequest(BaseModel):
     message: str
     temperature: float = 0.7
     max_tokens: int = 128
@@ -75,8 +75,7 @@ def chat_stream(req: ChatRequest):
             for chunk in stream:
                 delta = chunk.choices[0].delta.content
                 if delta:
-                    yield delta#return一次性返回所有，等全部说完再显示；yield分段多次返回，来一段返回一段，实时输出
-
+                    yield delta
         except Exception as e:
             yield f"[ERROR] {str(e)}"
 
