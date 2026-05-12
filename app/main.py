@@ -1,15 +1,20 @@
+import logging
 import os
 import time
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://127.0.0.1:8000/v1")
 VLLM_API_KEY = os.getenv("VLLM_API_KEY", "token-abc123")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-1.5B-Instruct")
+SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are a concise assistant.")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 client = OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
 
@@ -17,9 +22,9 @@ app = FastAPI(title="vLLM Demo Backend")
 
 
 class ChatRequest(BaseModel):
-    message: str
-    temperature: float = 0.7
-    max_tokens: int = 128
+    message: str = Field(..., min_length=1)
+    temperature: float = Field(0.7, ge=0.0, le=2.0)
+    max_tokens: int = Field(128, ge=1, le=2048)
 
 
 @app.get("/health")
@@ -34,7 +39,7 @@ def chat(req: ChatRequest):
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
-                {"role": "system", "content": "You are a concise assistant."},
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": req.message},
             ],
             temperature=req.temperature,
@@ -53,7 +58,7 @@ def chat(req: ChatRequest):
             },
         }
     except Exception as e:
-        print("CHAT ERROR:", repr(e))
+        logger.exception("Chat request failed")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -64,7 +69,7 @@ def chat_stream(req: ChatRequest):
             stream = client.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "You are a concise assistant."},
+                    {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": req.message},
                 ],
                 temperature=req.temperature,
@@ -77,6 +82,7 @@ def chat_stream(req: ChatRequest):
                 if delta:
                     yield delta
         except Exception as e:
+            logger.exception("Streaming chat request failed")
             yield f"[ERROR] {str(e)}"
 
     return StreamingResponse(generate(), media_type="text/plain;charset=utf-8")
