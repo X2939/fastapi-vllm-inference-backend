@@ -353,17 +353,6 @@ python scripts/stream_bench.py
 docs/vllm_request_lifecycle.md
 ```
 
-## 面试可讲点
-
-- 为什么要在 vLLM 外面包一层 FastAPI：业务系统通常不直接暴露底层模型接口，FastAPI 可以统一请求结构、system prompt、结果格式和耗时统计。
-- vLLM 和 FastAPI 各自负责什么：vLLM 负责模型推理服务，FastAPI 负责业务接口和调用链封装。
-- 流式和非流式有什么区别：流式更早返回中间 token，优化用户感知时延；非流式等待完整结果后一次性返回。
-- `gpu_memory_utilization` 和 `max_model_len` 为什么影响稳定性：它们会影响显存占用和 KV Cache 规模。
-- PagedAttention 解决什么问题：优化 KV Cache 的显存管理，减少碎片和浪费。
-- continuous batching 的作用：在线请求持续到来时动态调度，提高 GPU 利用率和整体吞吐。
-- vLLM 请求链路怎么走：`/v1/chat/completions` 进入 OpenAI serving 层，经 chat template、tokenizer、SamplingParams、AsyncLLM、EngineCore、scheduler、model executor、OutputProcessor，最终返回 JSON 或 SSE 流式输出。
-- 为什么压测和 vLLM 有关系：压测观察的是 vLLM 调度与 batching 在不同并发下对吞吐、P95、tokens/s 和 TTFT 的影响。
-
 ## 已知限制
 
 - Hugging Face 模型拉取阶段可能受网络影响。
