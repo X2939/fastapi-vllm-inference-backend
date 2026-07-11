@@ -1,0 +1,2 @@
+step_count,total_requests,total_tokens_generated,avg_ttft,p50_ttft,p95_ttft,avg_tpot,p50_tpot,p95_tpot,avg_latency,p50_latency,p95_latency,throughput,gpu_occupancy,gpu_busy_time,gpu_idle_time,avg_batch_size,peak_batch_size,admission_rate,avg_queue_length,kv_memory_utilization,kv_shared_blocks,mode
+19,16,182,0.25537659227848053,0.247802734375,0.4829709529876709,0.036593431638984264,0.03393311500549316,0.0770997405052185,0.5586212873458862,0.5635852813720703,0.5858426094055176,1129.634529690735,1.0,0.5836234092712402,0.0,9.578947368421053,16,1.0,0.0,0.0,0,static

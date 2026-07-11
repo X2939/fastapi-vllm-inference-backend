@@ -1,0 +1,30 @@
+name: exp001_baseline
+topic: baseline
+hypothesis: >
+  在固定 prompt 长度和 max_tokens 下，建立 FP16 服务的 latency / throughput 基线，
+  供后续 scheduler、KV Cache、量化实验对比。
+
+url: http://127.0.0.1:9000/chat
+prompt_type: medium
+prompt_mode: unique
+concurrency: [1, 2, 4]
+requests: 10
+warmup: 2
+max_tokens: 128
+timeout: 120
+
+environment:
+  model: Qwen2.5-1.5B-Instruct
+  vllm_max_model_len: 2048
+  vllm_gpu_memory_utilization: 0.65
+
+analysis_guide: |
+  - 记录 concurrency=1 时的 P50/P95 作为单请求基线。
+  - 观察 concurrency 升高时 throughput 与 tokens/s 是否上升。
+  - 若 P95 同步上升，说明 batching 提升了整体吞吐但牺牲了尾延迟。
+
+analysis_notes: |
+  - 这是所有后续实验的 baseline，重点记录控制变量与运行环境。
+  - 说明 metrics 来自客户端压测 + FastAPI Prometheus，不等同 vLLM 内部 kernel 指标。
+
+output_dir: reports/exp001_baseline

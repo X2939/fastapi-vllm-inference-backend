@@ -1,0 +1,57 @@
+{
+  "total_requests": 20,
+  "total_tokens": 296,
+  "total_time": 0.8069095611572266,
+  "throughput": 366.831692482975,
+  "ttft": {
+    "avg": 0.6396085739135742,
+    "p50": 0.6396081447601318,
+    "p95": 0.639617133140564,
+    "p99": 0.6396196699142456,
+    "median": 0.6396081447601318
+  },
+  "tpot": {
+    "avg": 0.009657348269185078,
+    "p50": 0.010291193470810398,
+    "p95": 0.01190872311592102,
+    "p99": 0.012000789880752562,
+    "median": 0.010291193470810398
+  },
+  "latency": {
+    "avg": 0.7612256050109864,
+    "p50": 0.7578551769256592,
+    "p95": 0.8062106847763062,
+    "p99": 0.8067205762863159,
+    "median": 0.7578551769256592
+  },
+  "queue_waiting_time": {
+    "avg": 0.001010727882385254,
+    "p50": 0.0010470151901245117,
+    "p95": 0.001692020893096924,
+    "p99": 0.0017458367347717284
+  },
+  "time_breakdown": {
+    "scheduler_time": 0,
+    "executor_time": 0,
+    "prefill_time": 0,
+    "decode_time": 0,
+    "total_step_time": 0
+  },
+  "batch_stats": {
+    "avg": 0,
+    "peak": 0
+  },
+  "queue_stats": {
+    "avg": 0,
+    "peak": 0
+  },
+  "gpu_occupancy": 0.9999706968467439,
+  "admission_rate": 1.0,
+  "total_steps": 26,
+  "kv_stats": {
+    "memory_utilization": 0.0,
+    "peak_shared_blocks": 0,
+    "prefix_cache_hits": 0,
+    "prefix_cache_hit_rate": 0.0
+  }
+}

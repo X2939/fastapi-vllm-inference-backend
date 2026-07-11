@@ -1,0 +1,242 @@
+[
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.8740837574005127,
+    "ttft": {
+      "avg": 1.5092081725597382,
+      "p50": 1.5092136859893799,
+      "p95": 1.5092249512672424,
+      "p99": 1.5092279744148254
+    },
+    "tpot": {
+      "avg": 0.017012124567969376,
+      "p50": 0.017738482531379253,
+      "p95": 0.019929245710372925,
+      "p99": 0.019953686422771878
+    },
+    "latency": {
+      "avg": 1.8043287575244904,
+      "p50": 1.8107210397720337,
+      "p95": 1.8752251386642456,
+      "p99": 1.8752965807914734
+    },
+    "throughput": 1387.344610257113,
+    "gpu_occupancy": 0.9999839704384352,
+    "gpu_busy_time": 1.874053716659546,
+    "gpu_idle_time": 3.0040740966796875e-05,
+    "peak_memory": 2640,
+    "avg_memory": 1684.0967741935483,
+    "peak_batch_size": 40,
+    "avg_batch_size": 25.666666666666668,
+    "tokens_per_second": 1387.344610257113,
+    "admission_rate": 1.0,
+    "total_steps": 31,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "MemoryBudget_8K"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.873563528060913,
+    "ttft": {
+      "avg": 1.5087599277496337,
+      "p50": 1.5087674856185913,
+      "p95": 1.5087745547294618,
+      "p99": 1.508775234222412
+    },
+    "tpot": {
+      "avg": 0.01698652047311359,
+      "p50": 0.017708154285655302,
+      "p95": 0.01988572120666504,
+      "p99": 0.01992156370480855
+    },
+    "latency": {
+      "avg": 1.8034634053707124,
+      "p50": 1.8097636699676514,
+      "p95": 1.8746180653572082,
+      "p99": 1.8746625900268554
+    },
+    "throughput": 1387.7298319800923,
+    "gpu_occupancy": 0.9999749309487618,
+    "gpu_busy_time": 1.87351655960083,
+    "gpu_idle_time": 4.696846008300781e-05,
+    "peak_memory": 2640,
+    "avg_memory": 1684.0967741935483,
+    "peak_batch_size": 40,
+    "avg_batch_size": 25.666666666666668,
+    "tokens_per_second": 1387.7298319800923,
+    "admission_rate": 1.0,
+    "total_steps": 31,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "MemoryBudget_16K"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.8794598579406738,
+    "ttft": {
+      "avg": 0.9487663090229035,
+      "p50": 0.8256891965866089,
+      "p95": 1.6869699478149414,
+      "p99": 1.7619807267189025
+    },
+    "tpot": {
+      "avg": 0.026730072556238587,
+      "p50": 0.02380913496017456,
+      "p95": 0.04526207137341592,
+      "p99": 0.05657154738903045
+    },
+    "latency": {
+      "avg": 1.4296002745628358,
+      "p50": 1.5079017877578735,
+      "p95": 1.8744159102439881,
+      "p99": 1.8800605845451355
+    },
+    "throughput": 1383.3761806697073,
+    "gpu_occupancy": 0.9999857922579476,
+    "gpu_busy_time": 1.8794331550598145,
+    "gpu_idle_time": 2.6702880859375e-05,
+    "peak_memory": 0,
+    "avg_memory": 0.0,
+    "peak_batch_size": 16,
+    "avg_batch_size": 11.666666666666666,
+    "tokens_per_second": 1383.3761806697073,
+    "admission_rate": 0.5263157894736842,
+    "total_steps": 67,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "MaxSeq_16"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.8762907981872559,
+    "ttft": {
+      "avg": 1.2577697515487671,
+      "p50": 1.1820523738861084,
+      "p95": 1.6996809482574462,
+      "p99": 1.6996839570999147
+    },
+    "tpot": {
+      "avg": 0.0273192098238144,
+      "p50": 0.02741654446944889,
+      "p95": 0.03612048024932543,
+      "p99": 0.03845675001825605
+    },
+    "latency": {
+      "avg": 1.7476403832435607,
+      "p50": 1.8115509748458862,
+      "p95": 1.8714446902275086,
+      "p99": 1.875263180732727
+    },
+    "throughput": 1385.7127064269262,
+    "gpu_occupancy": 0.9999871660211133,
+    "gpu_busy_time": 1.8762667179107666,
+    "gpu_idle_time": 2.4080276489257812e-05,
+    "peak_memory": 0,
+    "avg_memory": 0.0,
+    "peak_batch_size": 32,
+    "avg_batch_size": 17.906976744186046,
+    "tokens_per_second": 1385.7127064269262,
+    "admission_rate": 0.7547169811320755,
+    "total_steps": 44,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "MaxSeq_32"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.8756077289581299,
+    "ttft": {
+      "avg": 1.508896178007126,
+      "p50": 1.5088974237442017,
+      "p95": 1.5089044570922852,
+      "p99": 1.508904893398285
+    },
+    "tpot": {
+      "avg": 0.0170798462934075,
+      "p50": 0.017818941789514875,
+      "p95": 0.019946839809417725,
+      "p99": 0.019962382555007933
+    },
+    "latency": {
+      "avg": 1.805274212360382,
+      "p50": 1.8118011951446533,
+      "p95": 1.8766159653663634,
+      "p99": 1.8766689133644103
+    },
+    "throughput": 1386.217362968673,
+    "gpu_occupancy": 0.9999801700015597,
+    "gpu_busy_time": 1.87557053565979,
+    "gpu_idle_time": 3.719329833984375e-05,
+    "peak_memory": 0,
+    "avg_memory": 0.0,
+    "peak_batch_size": 40,
+    "avg_batch_size": 25.666666666666668,
+    "tokens_per_second": 1386.217362968673,
+    "admission_rate": 1.0,
+    "total_steps": 31,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "Priority_3levels"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 2600,
+    "total_time": 1.8749547004699707,
+    "ttft": {
+      "avg": 1.2575471162796021,
+      "p50": 1.1819899082183838,
+      "p95": 1.6990620493888855,
+      "p99": 1.6990661740303041
+    },
+    "tpot": {
+      "avg": 0.027267210032159556,
+      "p50": 0.027355960706477108,
+      "p95": 0.03608520458141962,
+      "p99": 0.0384277891090938
+    },
+    "latency": {
+      "avg": 1.7464643597602845,
+      "p50": 1.810381293296814,
+      "p95": 1.8697325348854066,
+      "p99": 1.8736937928199768
+    },
+    "throughput": 1386.7001689951717,
+    "gpu_occupancy": 0.9999848680019278,
+    "gpu_busy_time": 1.8749263286590576,
+    "gpu_idle_time": 2.8371810913085938e-05,
+    "peak_memory": 0,
+    "avg_memory": 0.0,
+    "peak_batch_size": 32,
+    "avg_batch_size": 17.906976744186046,
+    "tokens_per_second": 1386.7001689951717,
+    "admission_rate": 0.7547169811320755,
+    "total_steps": 44,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "strategy": "Composite_MB+MS"
+  }
+]

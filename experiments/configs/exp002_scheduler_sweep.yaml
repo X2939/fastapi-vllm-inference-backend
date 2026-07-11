@@ -1,0 +1,33 @@
+name: exp002_scheduler_sweep
+topic: scheduler
+hypothesis: >
+  提高并发会让 vLLM scheduler 把更多请求放入同一 batch，从而提升吞吐和 tokens/s；
+  但单请求等待时间和 P95 可能上升，体现 continuous batching 的吞吐-延迟权衡。
+
+url: http://127.0.0.1:9000/chat
+prompt_type: medium
+prompt_mode: unique
+concurrency: [1, 2, 4, 8]
+requests: 20
+warmup: 3
+max_tokens: 128
+timeout: 120
+
+environment:
+  model: Qwen2.5-1.5B-Instruct
+  vllm_max_model_len: 2048
+  vllm_gpu_memory_utilization: 0.65
+  note: 每个请求使用不同 suffix，避免 prefix cache 干扰 scheduler 实验
+
+analysis_guide: |
+  - 画 throughput vs concurrency、P95 vs concurrency 两张心理曲线。
+  - concurrency 从 1→8：若 throughput 近似线性上升而 P95 缓慢上升，说明 GPU 利用率提高。
+  - 若 concurrency 继续增大后出现 error_rate 上升，可能是 KV Cache 显存或调度队列压力导致。
+
+analysis_notes: |
+  - vLLM scheduler 按「每个请求还需计算的 token 数」统一调度，而不是硬编码 prefill/decode 两阶段。
+  - continuous batching：请求动态进出 batch，提高 GPU 利用率。
+  - 本实验用「unique prompt」隔离 KV prefix 因素，专注讲 scheduler / batching。
+  - 结合 Grafana 的 QPS 和 P95 面板，说明「压测数据」和「线上监控」如何互相验证。
+
+output_dir: reports/exp002_scheduler_sweep

@@ -1,0 +1,2 @@
+batch_size,num_requests,avg_ttft,p50_ttft,p95_ttft,avg_tpot,p50_tpot,p95_tpot,avg_latency,p50_latency,p95_latency,throughput,kv_memory_utilization,total_tokens,total_steps
+4,16,0.205782,0.227202,0.391362,0.005777,0.006845,0.009051,0.257778,0.308662,0.413922,1159.34,0.0,480,40

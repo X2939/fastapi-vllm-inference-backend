@@ -1,0 +1,173 @@
+{
+  "environment": {
+    "python": "3.10.12",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "backend": "fixed-workload CPU simulation",
+    "prefill_cost_per_token": 8e-05,
+    "decode_cost_per_token": 0.00012
+  },
+  "experiments": {
+    "scheduler": [
+      {
+        "experiment": "scheduler_concurrency",
+        "variant": "concurrency_1",
+        "x_value": 1,
+        "throughput_tok_s": 1290.841,
+        "ttft_ms": 146.248,
+        "ttft_p95_ms": 271.464,
+        "tpot_ms": 0.411,
+        "tpot_p95_ms": 0.434,
+        "latency_p95_ms": 281.529,
+        "avg_batch_size": 1.0,
+        "peak_batch_size": 1
+      },
+      {
+        "experiment": "scheduler_concurrency",
+        "variant": "concurrency_2",
+        "x_value": 2,
+        "throughput_tok_s": 2240.216,
+        "ttft_ms": 86.268,
+        "ttft_p95_ms": 161.968,
+        "tpot_ms": 0.419,
+        "tpot_p95_ms": 0.439,
+        "latency_p95_ms": 171.182,
+        "avg_batch_size": 2.0,
+        "peak_batch_size": 2
+      },
+      {
+        "experiment": "scheduler_concurrency",
+        "variant": "concurrency_4",
+        "x_value": 4,
+        "throughput_tok_s": 3664.005,
+        "ttft_ms": 54.716,
+        "ttft_p95_ms": 94.449,
+        "tpot_ms": 0.466,
+        "tpot_p95_ms": 0.485,
+        "latency_p95_ms": 104.605,
+        "avg_batch_size": 4.0,
+        "peak_batch_size": 4
+      },
+      {
+        "experiment": "scheduler_concurrency",
+        "variant": "concurrency_8",
+        "x_value": 8,
+        "throughput_tok_s": 5744.475,
+        "ttft_ms": 36.988,
+        "ttft_p95_ms": 53.133,
+        "tpot_ms": 0.551,
+        "tpot_p95_ms": 0.578,
+        "latency_p95_ms": 66.432,
+        "avg_batch_size": 8.0,
+        "peak_batch_size": 8
+      }
+    ],
+    "prefix": [
+      {
+        "experiment": "prefix_cache_optimization",
+        "variant": "baseline_off",
+        "x_value": 0,
+        "throughput_tok_s": 5179.559,
+        "ttft_ms": 39.699,
+        "ttft_p95_ms": 39.712,
+        "tpot_ms": 0.625,
+        "tpot_p95_ms": 0.625,
+        "latency_p95_ms": 49.088,
+        "avg_batch_size": 16.0,
+        "peak_batch_size": 16,
+        "cached_prompt_tokens": 0,
+        "cache_hit_rate": 0.0,
+        "peak_shared_blocks": 0
+      },
+      {
+        "experiment": "prefix_cache_optimization",
+        "variant": "optimized_on",
+        "x_value": 1,
+        "throughput_tok_s": 10638.151,
+        "ttft_ms": 14.338,
+        "ttft_p95_ms": 14.354,
+        "tpot_ms": 0.624,
+        "tpot_p95_ms": 0.624,
+        "latency_p95_ms": 23.717,
+        "avg_batch_size": 16.0,
+        "peak_batch_size": 16,
+        "cached_prompt_tokens": 1920,
+        "cache_hit_rate": 0.9375,
+        "peak_shared_blocks": 8
+      }
+    ],
+    "chunked": [
+      {
+        "experiment": "chunked_prefill",
+        "variant": "standard",
+        "x_value": 0,
+        "throughput_tok_s": 2194.577,
+        "ttft_ms": 48.557,
+        "ttft_p95_ms": 48.567,
+        "tpot_ms": 0.633,
+        "tpot_p95_ms": 0.633,
+        "latency_p95_ms": 58.068,
+        "avg_batch_size": 8.0,
+        "peak_batch_size": 8,
+        "short_ttft_ms": 48.555,
+        "short_ttft_p95_ms": 48.56
+      },
+      {
+        "experiment": "chunked_prefill",
+        "variant": "chunk_128",
+        "x_value": 128,
+        "throughput_tok_s": 862.186,
+        "ttft_ms": 34.091,
+        "ttft_p95_ms": 98.726,
+        "tpot_ms": 7.374,
+        "tpot_p95_ms": 8.366,
+        "latency_p95_ms": 146.883,
+        "avg_batch_size": 5.148,
+        "peak_batch_size": 8,
+        "short_ttft_ms": 18.702,
+        "short_ttft_p95_ms": 18.708
+      }
+    ],
+    "paged": [
+      {
+        "experiment": "paged_attention_block_size",
+        "variant": "block_8",
+        "x_value": 8,
+        "allocated_blocks": 180,
+        "requested_tokens": 1427,
+        "capacity_tokens": 1440,
+        "wasted_tokens": 13,
+        "fragmentation_pct": 0.903
+      },
+      {
+        "experiment": "paged_attention_block_size",
+        "variant": "block_16",
+        "x_value": 16,
+        "allocated_blocks": 90,
+        "requested_tokens": 1427,
+        "capacity_tokens": 1440,
+        "wasted_tokens": 13,
+        "fragmentation_pct": 0.903
+      },
+      {
+        "experiment": "paged_attention_block_size",
+        "variant": "block_32",
+        "x_value": 32,
+        "allocated_blocks": 48,
+        "requested_tokens": 1427,
+        "capacity_tokens": 1536,
+        "wasted_tokens": 109,
+        "fragmentation_pct": 7.096
+      },
+      {
+        "experiment": "paged_attention_block_size",
+        "variant": "block_64",
+        "x_value": 64,
+        "allocated_blocks": 27,
+        "requested_tokens": 1427,
+        "capacity_tokens": 1728,
+        "wasted_tokens": 301,
+        "fragmentation_pct": 17.419
+      }
+    ]
+  }
+}

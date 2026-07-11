@@ -1,0 +1,82 @@
+[
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 4861,
+    "total_time": 3.638277769088745,
+    "ttft": {
+      "avg": 3.1996733427047728,
+      "p50": 3.1996684074401855,
+      "p95": 3.199737787246704,
+      "p99": 3.199738368988037
+    },
+    "tpot": {
+      "avg": 0.01641976285525363,
+      "p50": 0.016673896993909563,
+      "p95": 0.019777200486924912,
+      "p99": 0.01988228744930691
+    },
+    "latency": {
+      "avg": 3.5381854236125947,
+      "p50": 3.5580852031707764,
+      "p95": 3.6373047709465025,
+      "p99": 3.6396968030929564
+    },
+    "throughput": 1336.0717098896773,
+    "gpu_occupancy": 0.9999937090609771,
+    "gpu_busy_time": 3.6382548809051514,
+    "gpu_idle_time": 2.288818359375e-05,
+    "peak_memory": 4901,
+    "avg_memory": 2760.3658536585367,
+    "peak_batch_size": 40,
+    "avg_batch_size": 23.0,
+    "tokens_per_second": 1336.0717098896773,
+    "admission_rate": 1.0,
+    "total_steps": 41,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0,
+    "prefix_sharing": "OFF"
+  },
+  {
+    "backend": "pytorch",
+    "total_requests": 40,
+    "total_tokens": 4861,
+    "total_time": 3.6378462314605713,
+    "ttft": {
+      "avg": 3.1991656601428984,
+      "p50": 3.1991740465164185,
+      "p95": 3.199181115627289,
+      "p99": 3.1991817951202393
+    },
+    "tpot": {
+      "avg": 0.016437014224458243,
+      "p50": 0.016692889459205395,
+      "p95": 0.01981433179643419,
+      "p99": 0.019910747475094262
+    },
+    "latency": {
+      "avg": 3.537915790081024,
+      "p50": 3.5579901933670044,
+      "p95": 3.6368856787681576,
+      "p99": 3.6393065881729125
+    },
+    "throughput": 1336.2302007054159,
+    "gpu_occupancy": 0.9999918732398437,
+    "gpu_busy_time": 3.6378166675567627,
+    "gpu_idle_time": 2.956390380859375e-05,
+    "peak_memory": 4901,
+    "avg_memory": 2760.3658536585367,
+    "peak_batch_size": 40,
+    "avg_batch_size": 23.0,
+    "tokens_per_second": 1336.2302007054159,
+    "admission_rate": 1.0,
+    "total_steps": 41,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 3,
+    "kv_prefix_cache_hits": 19,
+    "kv_prefix_cache_hit_rate": 0.475,
+    "prefix_sharing": "ON"
+  }
+]

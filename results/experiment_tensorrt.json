@@ -1,0 +1,119 @@
+[
+  {
+    "backend": "pytorch",
+    "total_requests": 20,
+    "total_tokens": 911,
+    "total_time": 0.8081541061401367,
+    "ttft": {
+      "avg": 0.6404398798942565,
+      "p50": 0.6404410600662231,
+      "p95": 0.6404470682144164,
+      "p99": 0.6404496049880981
+    },
+    "tpot": {
+      "avg": 0.009776979386926374,
+      "p50": 0.010421556956840284,
+      "p95": 0.012098398208618164,
+      "p99": 0.012194650650024414
+    },
+    "latency": {
+      "avg": 0.7634557366371155,
+      "p50": 0.7601829767227173,
+      "p95": 0.8086556434631348,
+      "p99": 0.8091543006896973
+    },
+    "throughput": 1127.2602503389737,
+    "gpu_occupancy": 0.9999542724840721,
+    "gpu_busy_time": 0.808117151260376,
+    "gpu_idle_time": 3.695487976074219e-05,
+    "peak_memory": 931,
+    "avg_memory": 574.2307692307693,
+    "peak_batch_size": 20,
+    "avg_batch_size": 11.84,
+    "tokens_per_second": 1127.2602503389737,
+    "admission_rate": 1.0,
+    "total_steps": 26,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0
+  },
+  {
+    "backend": "onnx",
+    "total_requests": 20,
+    "total_tokens": 911,
+    "total_time": 0.15227150917053223,
+    "ttft": {
+      "avg": 0.023141860961914062,
+      "p50": 0.023144245147705078,
+      "p95": 0.02316441535949707,
+      "p99": 0.023170213699340823
+    },
+    "tpot": {
+      "avg": 0.008135617797956986,
+      "p50": 0.008693444006370775,
+      "p95": 0.011268937587738037,
+      "p99": 0.011270205974578857
+    },
+    "latency": {
+      "avg": 0.12339729070663452,
+      "p50": 0.12296581268310547,
+      "p95": 0.1532872438430786,
+      "p99": 0.15345865726470947
+    },
+    "throughput": 5982.734425911225,
+    "gpu_occupancy": 0.9998293336339567,
+    "gpu_busy_time": 0.15224552154541016,
+    "gpu_idle_time": 2.5987625122070312e-05,
+    "peak_memory": 931,
+    "avg_memory": 574.2307692307693,
+    "peak_batch_size": 20,
+    "avg_batch_size": 11.84,
+    "tokens_per_second": 5982.734425911225,
+    "admission_rate": 1.0,
+    "total_steps": 26,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0
+  },
+  {
+    "backend": "tensorrt",
+    "total_requests": 20,
+    "total_tokens": 911,
+    "total_time": 0.13575029373168945,
+    "ttft": {
+      "avg": 0.012516915798187256,
+      "p50": 0.012509465217590332,
+      "p95": 0.012550258636474609,
+      "p99": 0.012556056976318359
+    },
+    "tpot": {
+      "avg": 0.007264386635670514,
+      "p50": 0.007740893147208474,
+      "p95": 0.008894136973789761,
+      "p99": 0.009092937197004046
+    },
+    "latency": {
+      "avg": 0.10363094806671143,
+      "p50": 0.1014714241027832,
+      "p95": 0.13600820302963257,
+      "p99": 0.13648566007614135
+    },
+    "throughput": 6710.851040960487,
+    "gpu_occupancy": 0.9996891344590061,
+    "gpu_busy_time": 0.13570809364318848,
+    "gpu_idle_time": 4.220008850097656e-05,
+    "peak_memory": 931,
+    "avg_memory": 574.2307692307693,
+    "peak_batch_size": 20,
+    "avg_batch_size": 11.84,
+    "tokens_per_second": 6710.851040960487,
+    "admission_rate": 1.0,
+    "total_steps": 26,
+    "kv_memory_utilization": 0.0,
+    "kv_peak_shared_blocks": 0,
+    "kv_prefix_cache_hits": 0,
+    "kv_prefix_cache_hit_rate": 0.0
+  }
+]

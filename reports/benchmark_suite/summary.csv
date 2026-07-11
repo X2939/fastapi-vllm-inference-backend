@@ -1,0 +1,13 @@
+allocated_blocks,avg_batch_size,cache_hit_rate,cached_prompt_tokens,capacity_tokens,experiment,fragmentation_pct,latency_p95_ms,peak_batch_size,peak_shared_blocks,requested_tokens,short_ttft_ms,short_ttft_p95_ms,throughput_tok_s,tpot_ms,tpot_p95_ms,ttft_ms,ttft_p95_ms,variant,wasted_tokens,x_value
+,1.0,,,,scheduler_concurrency,,281.529,1,,,,,1290.841,0.411,0.434,146.248,271.464,concurrency_1,,1
+,2.0,,,,scheduler_concurrency,,171.182,2,,,,,2240.216,0.419,0.439,86.268,161.968,concurrency_2,,2
+,4.0,,,,scheduler_concurrency,,104.605,4,,,,,3664.005,0.466,0.485,54.716,94.449,concurrency_4,,4
+,8.0,,,,scheduler_concurrency,,66.432,8,,,,,5744.475,0.551,0.578,36.988,53.133,concurrency_8,,8
+,16.0,0.0,0,,prefix_cache_optimization,,49.088,16,0,,,,5179.559,0.625,0.625,39.699,39.712,baseline_off,,0
+,16.0,0.9375,1920,,prefix_cache_optimization,,23.717,16,8,,,,10638.151,0.624,0.624,14.338,14.354,optimized_on,,1
+,8.0,,,,chunked_prefill,,58.068,8,,,48.555,48.56,2194.577,0.633,0.633,48.557,48.567,standard,,0
+,5.148,,,,chunked_prefill,,146.883,8,,,18.702,18.708,862.186,7.374,8.366,34.091,98.726,chunk_128,,128
+180,,,,1440,paged_attention_block_size,0.903,,,,1427,,,,,,,,block_8,13,8
+90,,,,1440,paged_attention_block_size,0.903,,,,1427,,,,,,,,block_16,13,16
+48,,,,1536,paged_attention_block_size,7.096,,,,1427,,,,,,,,block_32,109,32
+27,,,,1728,paged_attention_block_size,17.419,,,,1427,,,,,,,,block_64,301,64

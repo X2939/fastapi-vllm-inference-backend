@@ -1,0 +1,2 @@
+# Optional GPU serving dependency. Install only on a supported CUDA/Linux host.
+vllm

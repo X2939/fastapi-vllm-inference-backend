@@ -1,0 +1,2 @@
+concurrency,num_requests,avg_ttft,p50_ttft,p95_ttft,avg_tpot,p50_tpot,p95_tpot,avg_latency,p50_latency,p95_latency,throughput,kv_memory_utilization,total_tokens,total_steps
+16,16,0.16372,0.182902,0.311925,0.004951,0.005736,0.00742,0.208279,0.24907,0.334366,1195.78,0.0,400,40

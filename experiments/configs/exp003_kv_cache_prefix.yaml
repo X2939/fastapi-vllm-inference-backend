@@ -1,0 +1,36 @@
+name: exp003_kv_cache_prefix
+topic: kv_cache
+hypothesis: >
+  在 shared_prefix 模式下，多个请求共享长前缀，prefill 阶段的 KV Cache 计算模式
+  与 unique 模式不同；若 vLLM 启用 prefix caching，shared_prefix 的首 token / P50
+  可能优于 unique。若未启用 prefix caching，差异主要体现在 prompt token 数一致时的
+  prefill 工作量，需结合 vLLM 启动参数解读。
+
+url: http://127.0.0.1:9000/chat
+prompt_type: medium
+prompt_mode: shared_prefix
+concurrency: [1, 2, 4]
+requests: 15
+warmup: 2
+max_tokens: 64
+timeout: 120
+
+environment:
+  model: Qwen2.5-1.5B-Instruct
+  vllm_max_model_len: 2048
+  vllm_gpu_memory_utilization: 0.65
+  vllm_prefix_caching: "建议对比 --enable-prefix-caching 开/关两次运行"
+
+analysis_guide: |
+  - 先跑本实验（shared_prefix），再跑 exp001 或复制配置改 prompt_mode=unique 做对照。
+  - 关注 avg_prompt_tokens 是否一致；若一致但 latency 不同，讨论 prefix cache 命中。
+  - max_tokens 故意设小（64），让 prefill 占比更高，更容易观察 KV Cache 相关差异。
+  - PagedAttention 解决的是 KV 显存碎片问题；prefix caching 解决的是重复前缀计算问题，两者不同。
+
+analysis_notes: |
+  - prefill：并行处理所有输入 token，计算并写入 KV Cache，通常决定 TTFT。
+  - decode：每次只生成 1 个 token，复用已有 KV Cache，TPOT 主要反映 decode 成本。
+  - KV Cache 随序列长度线性增长；max_model_len 和 gpu_memory_utilization 限制并发上限。
+  - 本实验是「工程可观测」层面的 proxy，不是替代 vLLM 内部 profiler。
+
+output_dir: reports/exp003_kv_cache_prefix
