@@ -11,6 +11,7 @@
 
 - 一条命令完成 4 组实验并生成 4 张图。
 - 一次落在真实执行路径上的优化：Prefix Cache 命中后跳过重复 prefill 计算。
+- vLLM-style 组件边界：Scheduler、Executor/ModelRunner、BlockAllocator、BlockManager、PrefixCache、KVCacheManager。
 - 完整请求链路：API、SchedulerOutput、Worker、ModelRunnerOutput、Paged KV Cache、Metrics。
 - TTFT、TPOT、吞吐和 P95 的定义、数据与原因分析。
 
