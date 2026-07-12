@@ -1,13 +1,38 @@
 PYTHON ?= python3
+VLLM_ENV ?= /home/xxx/venvs/vllm-env
+VLLM_PYTHON ?= $(VLLM_ENV)/bin/python
+VLLM_BIN ?= $(VLLM_ENV)/bin/vllm
 VLLM_HOST ?= 0.0.0.0
 VLLM_PORT ?= 8000
 API_HOST ?= 0.0.0.0
 API_PORT ?= 9000
 MODEL_PATH ?= /home/xxx/models/Qwen2.5-1.5B-Instruct
+MODEL_AWQ_PATH ?= /home/xxx/models/Qwen2.5-1.5B-Instruct-AWQ
+MODEL_NAME ?= $(MODEL_PATH)
 API_KEY ?= token-abc123
+GPU_BENCH_CONCURRENCY ?= 1,2,4
+GPU_BENCH_REQUESTS ?= 20
+GPU_BENCH_WARMUP ?= 3
+GPU_BENCH_RUNS ?= 3
+GPU_BENCH_MAX_TOKENS ?= 128
+GPU_BENCH_OUTPUT ?= reports/gpu_benchmark
+GPU_BENCH_VARIANT ?= bf16_baseline
+GPU_BENCH_SERVER_ARGS ?= effective: enable_prefix_caching=true, enable_chunked_prefill=true
+SERVER_EXTRA_ARGS ?=
+GPU_PREFIX_CONCURRENCY ?= 1,2,4
+GPU_PREFIX_REQUESTS ?= 16
+GPU_PREFIX_WARMUP ?= 3
+GPU_PREFIX_RUNS ?= 3
+GPU_PREFIX_MAX_TOKENS ?= 64
+GPU_PREFIX_OUTPUT ?= reports/gpu_prefix_cache
+GPU_PREFIX_VARIANT ?= unspecified
+GPU_PREFIX_SERVER_ARGS ?=
+GPU_AWQ_OUTPUT ?= reports/gpu_awq
+QUALITY_OUTPUT ?= reports/quality_smoke
+QUALITY_MAX_TOKENS ?= 96
 
-.PHONY: check test compile benchmark serve-api serve-vllm bench stream-bench \
-	experiment-baseline experiment-scheduler experiment-kv-cache compose-up compose-down compose-logs
+.PHONY: check test compile benchmark benchmark-gpu benchmark-awq render-gpu-report compare-prefix-cache compare-awq quality-smoke quality-smoke-bf16 quality-smoke-awq compare-quality serve-api serve-vllm serve-vllm-awq bench stream-bench \
+	benchmark-prefix-cache experiment-baseline experiment-scheduler experiment-kv-cache compose-up compose-down compose-logs
 
 check: compile test
 
@@ -24,12 +49,95 @@ serve-api:
 	uvicorn app.main:app --host $(API_HOST) --port $(API_PORT)
 
 serve-vllm:
-	vllm serve $(MODEL_PATH) \
+	$(VLLM_BIN) serve $(MODEL_PATH) \
 		--host $(VLLM_HOST) \
 		--port $(VLLM_PORT) \
 		--api-key $(API_KEY) \
 		--gpu-memory-utilization 0.65 \
-		--max-model-len 2048
+		--max-model-len 2048 \
+		$(SERVER_EXTRA_ARGS)
+
+serve-vllm-awq:
+	$(VLLM_BIN) serve $(MODEL_AWQ_PATH) \
+		--host $(VLLM_HOST) \
+		--port $(VLLM_PORT) \
+		--api-key $(API_KEY) \
+		--gpu-memory-utilization 0.65 \
+		--max-model-len 2048 \
+		--quantization awq
+
+benchmark-gpu:
+	$(VLLM_PYTHON) scripts/gpu_benchmark.py \
+		--model "$(MODEL_NAME)" \
+		--api-key "$(API_KEY)" \
+		--concurrency $(GPU_BENCH_CONCURRENCY) \
+		--requests $(GPU_BENCH_REQUESTS) \
+		--warmup $(GPU_BENCH_WARMUP) \
+		--runs $(GPU_BENCH_RUNS) \
+		--max-tokens $(GPU_BENCH_MAX_TOKENS) \
+		--experiment-variant "$(GPU_BENCH_VARIANT)" \
+		--server-args "$(GPU_BENCH_SERVER_ARGS)" \
+		--output-dir $(GPU_BENCH_OUTPUT)
+
+benchmark-awq:
+	$(VLLM_PYTHON) scripts/gpu_benchmark.py \
+		--model "$(MODEL_AWQ_PATH)" \
+		--api-key "$(API_KEY)" \
+		--concurrency $(GPU_BENCH_CONCURRENCY) \
+		--requests $(GPU_BENCH_REQUESTS) \
+		--warmup $(GPU_BENCH_WARMUP) \
+		--runs $(GPU_BENCH_RUNS) \
+		--max-tokens $(GPU_BENCH_MAX_TOKENS) \
+		--experiment-variant "awq_int4" \
+		--server-args "--quantization awq" \
+		--output-dir $(GPU_AWQ_OUTPUT)
+
+render-gpu-report:
+	$(VLLM_PYTHON) scripts/render_gpu_report.py --input-dir $(GPU_BENCH_OUTPUT)
+
+benchmark-prefix-cache:
+	$(VLLM_PYTHON) scripts/gpu_benchmark.py \
+		--model "$(MODEL_NAME)" \
+		--api-key "$(API_KEY)" \
+		--prompt-type long \
+		--prompt-mode shared_prefix \
+		--concurrency $(GPU_PREFIX_CONCURRENCY) \
+		--requests $(GPU_PREFIX_REQUESTS) \
+		--warmup $(GPU_PREFIX_WARMUP) \
+		--runs $(GPU_PREFIX_RUNS) \
+		--max-tokens $(GPU_PREFIX_MAX_TOKENS) \
+		--experiment-variant "$(GPU_PREFIX_VARIANT)" \
+		--server-args "$(GPU_PREFIX_SERVER_ARGS)" \
+		--output-dir $(GPU_PREFIX_OUTPUT)
+
+compare-prefix-cache:
+	$(VLLM_PYTHON) scripts/compare_gpu_benchmarks.py \
+		--before reports/gpu_prefix_cache_off \
+		--after reports/gpu_prefix_cache_on
+
+compare-awq:
+	$(VLLM_PYTHON) scripts/compare_quantization.py \
+		--bf16 reports/gpu_benchmark \
+		--awq reports/gpu_awq
+
+quality-smoke:
+	$(VLLM_PYTHON) scripts/quality_smoke.py \
+		--model "$(MODEL_NAME)" \
+		--api-key "$(API_KEY)" \
+		--max-tokens $(QUALITY_MAX_TOKENS) \
+		--label "$(GPU_BENCH_VARIANT)" \
+		--output-dir $(QUALITY_OUTPUT)
+
+quality-smoke-bf16:
+	$(MAKE) quality-smoke QUALITY_OUTPUT=reports/quality_smoke_bf16 MODEL_NAME="$(MODEL_PATH)" GPU_BENCH_VARIANT=bf16_baseline
+
+quality-smoke-awq:
+	$(MAKE) quality-smoke QUALITY_OUTPUT=reports/quality_smoke_awq MODEL_NAME="$(MODEL_AWQ_PATH)" GPU_BENCH_VARIANT=awq_int4
+
+compare-quality:
+	$(VLLM_PYTHON) scripts/compare_quality.py \
+		--bf16 reports/quality_smoke_bf16 \
+		--awq reports/quality_smoke_awq
 
 bench:
 	$(PYTHON) scripts/inference_bench.py --concurrency 1,2,4 --requests 10

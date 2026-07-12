@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-07-12T08:11:03.456173+00:00",
+  "backend": "real OpenAI-compatible streaming endpoint",
+  "experiment_variant": "bf16_baseline",
+  "server_args": "effective: enable_prefix_caching=true, enable_chunked_prefill=true",
+  "url": "http://127.0.0.1:8000/v1/chat/completions",
+  "model": "/home/xxx/models/Qwen2.5-1.5B-Instruct",
+  "prompt_type": "medium",
+  "prompt_mode": "unique",
+  "concurrency": [
+    1,
+    2,
+    4
+  ],
+  "requests_per_level": 20,
+  "warmup": 3,
+  "runs": 3,
+  "max_tokens": 128,
+  "notes": "TPOT uses (E2E - TTFT) / (completion_tokens - 1).",
+  "environment": {
+    "python": "3.10.12",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "packages": {
+      "vllm": "0.19.0",
+      "torch": "2.10.0",
+      "requests": "2.33.1"
+    },
+    "nvidia_smi": {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory",
+        "--format=csv,noheader,nounits"
+      ],
+      "returncode": 0,
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5462, 533, 6, 40",
+      "stderr": "",
+      "gpus": [
+        {
+          "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+          "driver_version": "551.61",
+          "memory_total_mib": 6144,
+          "memory_used_mib": 5462,
+          "memory_free_mib": 533,
+          "gpu_utilization_percent": 6,
+          "memory_utilization_percent": 40
+        }
+      ]
+    },
+    "torch_cuda": {
+      "available": true,
+      "cuda_version": "12.8",
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    }
+  },
+  "environment_before": {
+    "python": "3.10.12",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "packages": {
+      "vllm": "0.19.0",
+      "torch": "2.10.0",
+      "requests": "2.33.1"
+    },
+    "nvidia_smi": {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory",
+        "--format=csv,noheader,nounits"
+      ],
+      "returncode": 0,
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5462, 533, 6, 40",
+      "stderr": "",
+      "gpus": [
+        {
+          "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+          "driver_version": "551.61",
+          "memory_total_mib": 6144,
+          "memory_used_mib": 5462,
+          "memory_free_mib": 533,
+          "gpu_utilization_percent": 6,
+          "memory_utilization_percent": 40
+        }
+      ]
+    },
+    "torch_cuda": {
+      "available": true,
+      "cuda_version": "12.8",
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    }
+  },
+  "environment_after": {
+    "python": "3.10.12",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "packages": {
+      "vllm": "0.19.0",
+      "torch": "2.10.0",
+      "requests": "2.33.1"
+    },
+    "nvidia_smi": {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory",
+        "--format=csv,noheader,nounits"
+      ],
+      "returncode": 0,
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5457, 538, 99, 60",
+      "stderr": "",
+      "gpus": [
+        {
+          "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
+          "driver_version": "551.61",
+          "memory_total_mib": 6144,
+          "memory_used_mib": 5457,
+          "memory_free_mib": 538,
+          "gpu_utilization_percent": 99,
+          "memory_utilization_percent": 60
+        }
+      ]
+    },
+    "torch_cuda": {
+      "available": true,
+      "cuda_version": "12.8",
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    }
+  }
+}

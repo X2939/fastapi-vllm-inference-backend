@@ -56,6 +56,97 @@ python3 -m pytest
 python3 -m benchmarks.runner
 ```
 
+## 真实 GPU Benchmark
+
+默认 `make benchmark` 是 CPU 仿真。以下流程直接请求 vLLM 的 OpenAI-compatible 流式接口，记录真实请求路径中的 TTFT、TPOT、E2E latency、P95、tokens/s、错误率和原始请求样本。
+
+需要已安装 vLLM 的 Python 环境、NVIDIA GPU 和本地模型。项目默认环境变量指向 `/home/xxx/venvs/vllm-env`；其他环境可在命令前覆盖 `VLLM_ENV`、`MODEL_PATH` 和 `API_KEY`。
+
+| 实验 | 服务命令 | Benchmark / 对比命令 | 输出目录 | 目的 |
+|---|---|---|---|---|
+| BF16 baseline | `make serve-vllm` | `make benchmark-gpu` | `reports/gpu_benchmark/` | 真实流式 TTFT/TPOT/吞吐基线 |
+| Prefix Cache OFF/ON | `make serve-vllm SERVER_EXTRA_ARGS=...` | `make benchmark-prefix-cache` + `make compare-prefix-cache` | `reports/gpu_prefix_cache_*` | 验证 prefill 复用对 TTFT 的影响 |
+| AWQ INT4 | `make serve-vllm-awq` | `make benchmark-awq` + `make compare-awq` | `reports/gpu_awq/`、`reports/gpu_quantization_comparison/` | 对比量化后的吞吐、延迟和显存 |
+| Quality smoke | 使用对应服务 | `make quality-smoke-bf16` / `make quality-smoke-awq` / `make compare-quality` | `reports/quality_smoke_*` | 固定 prompt 回归，不作为正式准确率评测 |
+
+终端一启动服务：
+
+```bash
+make serve-vllm
+```
+
+终端二执行基准：
+
+```bash
+make benchmark-gpu
+```
+
+该命令会在运行前校验 `http://127.0.0.1:8000/v1/models`，默认对并发 `1,2,4` 各执行 3 次；结果输出到 `reports/gpu_benchmark/`：
+
+- `metadata.json`：GPU、驱动、CUDA、PyTorch、vLLM 版本、workload 快照，以及压测前后的显存占用。
+- `summary.csv`：每次运行、每个并发度的汇总指标。
+- `requests.csv`：逐请求 TTFT、TPOT、E2E latency、token 数与错误信息。
+- `REPORT.md`：按并发度汇总的可读报告。
+- 3 张 PNG：吞吐/P95 E2E、P95 TTFT/TPOT、逐请求 E2E latency 分布。
+
+可通过 Make 变量固定控制变量，例如：
+
+```bash
+make benchmark-gpu GPU_BENCH_CONCURRENCY=1,2,4,8 GPU_BENCH_REQUESTS=30 GPU_BENCH_RUNS=3
+```
+
+`TPOT = (E2E - TTFT) / (completion_tokens - 1)`；它是客户端流式请求级指标，不是 CUDA kernel 的逐 token 计时。真实结论必须连同 `metadata.json`、原始 CSV 和 workload 一起保存。
+
+已存在的 CSV 可不重跑模型而重新渲染图表：
+
+```bash
+make render-gpu-report
+```
+
+### Prefix Cache A/B
+
+该实验固定 shared-prefix workload、模型、显存比例、并发、请求数和输出长度，仅切换 vLLM 的 Prefix Cache。先以前缀缓存关闭的服务运行：
+
+```bash
+make serve-vllm SERVER_EXTRA_ARGS=--no-enable-prefix-caching
+make benchmark-prefix-cache GPU_PREFIX_OUTPUT=reports/gpu_prefix_cache_off GPU_PREFIX_VARIANT=prefix_cache_off GPU_PREFIX_SERVER_ARGS=--no-enable-prefix-caching
+```
+
+停止该服务后，以启用缓存的服务运行同一 workload：
+
+```bash
+make serve-vllm SERVER_EXTRA_ARGS=--enable-prefix-caching
+make benchmark-prefix-cache GPU_PREFIX_OUTPUT=reports/gpu_prefix_cache_on GPU_PREFIX_VARIANT=prefix_cache_on GPU_PREFIX_SERVER_ARGS=--enable-prefix-caching
+```
+
+每个并发度在正式采样前执行 warmup，使 shared prefix 已经进入 KV Cache。对比两个目录中的 `metadata.json`、`summary.csv` 和 `REPORT.md`：Prefix Cache 主要减少重复 prefill，预期直接改善 TTFT，吞吐和 P95 是否改善取决于 batch、排队与显存压力。
+
+完成两次运行后，自动生成 OFF/ON 变化表与对比图：
+
+```bash
+make compare-prefix-cache
+```
+
+### AWQ INT4 对照
+
+同模型家族的 AWQ 权重可作为权重压缩对照；启动时显式记录 `--quantization awq`，再运行与 BF16 baseline 相同的 workload：
+
+```bash
+make serve-vllm-awq
+make benchmark-awq
+make compare-awq
+```
+
+AWQ 的比较需要同时报告显存、最大稳定并发、TTFT、TPOT、吞吐和输出质量。固定 prompt 的回归 smoke 可在对应服务启动后执行：
+
+```bash
+make quality-smoke-bf16
+make quality-smoke-awq
+make compare-quality
+```
+
+当前 RTX 3060 Laptop GPU 的实测结果位于 `reports/gpu_quantization_comparison/`：AWQ INT4 在该 workload 下吞吐低于 BF16，P95 TPOT 和 E2E latency 更高；质量 smoke 中 BF16 与 AWQ 都是 90% pass。权重压缩不代表 KV Cache 按同一比例缩小，且 INT4 的反量化开销可能使小 batch 的吞吐不升反降。
+
 ## Benchmark 结果快照
 
 下面是 2026-07-11 在 WSL CPU 仿真后端上的一次结果。workload 与成本模型固定为 prefill `0.08 ms/token`、decode `0.12 ms/token`；墙钟计时会有小幅波动。它适合做机制 A/B，不用于宣称某张 GPU 的性能。

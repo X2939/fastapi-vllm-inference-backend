@@ -1,0 +1,38 @@
+id,category,ok,json_ok,expected_ok,latency,prompt_tokens,completion_tokens,response,error
+arith_add,arithmetic,True,True,True,0.46096716600004584,45,15,"```json
+{
+  ""answer"": 45
+}
+```",
+arith_mul,arithmetic,True,True,True,0.22724750102497637,44,15,"```json
+{
+  ""answer"": 91
+}
+```",
+sort_numbers,format,True,True,True,0.2673381860367954,49,20,"```json
+{
+  ""answer"": [2, 5, 9]
+}
+```",
+lowercase,format,True,True,True,0.10270200099330395,44,7,"{""answer"":""pagedattention""}",
+metric_ttft,inference,True,True,True,0.20702386897755787,53,15,"```json
+{
+  ""answer"": ""TTFT""
+}
+```",
+metric_tpot,inference,True,True,True,0.19553426100173965,53,14,"```json
+{
+  ""answer"": ""TPOT""
+}",
+kv_cache,inference,True,True,True,0.21804478397825733,53,16,"```json
+{
+  ""answer"": [""Key"", ""Value""]
+}",
+scheduler,inference,True,True,True,0.1575035480200313,51,11,"{
+  ""answer"": ""GPU utilization""
+}",
+paged_attention,inference,False,False,True,0.06855300697498024,51,4,`block`,
+prefix_cache,inference,True,True,True,0.22156898101093248,49,16,"```json
+{
+  ""answer"": ""repeated prompt prefixes""
+}",

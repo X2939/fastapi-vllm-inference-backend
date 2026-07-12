@@ -1,0 +1,10 @@
+{"id":"arith_add","category":"arithmetic","prompt":"Return only compact JSON with key answer. What is 17 + 28?","expected_contains":["45"],"require_json":true}
+{"id":"arith_mul","category":"arithmetic","prompt":"Return only compact JSON with key answer. What is 13 * 7?","expected_contains":["91"],"require_json":true}
+{"id":"sort_numbers","category":"format","prompt":"Return only compact JSON with key answer. Sort these numbers ascending: 9, 2, 5.","expected_contains":["2","5","9"],"require_json":true}
+{"id":"lowercase","category":"format","prompt":"Return only compact JSON with key answer. Lowercase this string exactly: PagedAttention","expected_contains":["pagedattention"],"require_json":true}
+{"id":"metric_ttft","category":"inference","prompt":"Context: TTFT means time to first token. Return only compact JSON with key answer containing the acronym for time to first token.","expected_contains":["ttft"],"require_json":true}
+{"id":"metric_tpot","category":"inference","prompt":"Context: TPOT means time per output token. Return only compact JSON with key answer containing the acronym for time per output token.","expected_contains":["tpot"],"require_json":true}
+{"id":"kv_cache","category":"inference","prompt":"Context: KV Cache stores Key and Value tensors from previous tokens. Return only compact JSON with key answer listing the two tensor names.","expected_contains":["key","value"],"require_json":true}
+{"id":"scheduler","category":"inference","prompt":"Context: Continuous batching improves GPU utilization by mixing active requests. Return only compact JSON with key answer naming the improved resource.","expected_contains":["gpu"],"require_json":true}
+{"id":"paged_attention","category":"inference","prompt":"Context: PagedAttention splits KV Cache into fixed-size blocks. Return only compact JSON with key answer naming the unit.","expected_contains":["block"],"require_json":true}
+{"id":"prefix_cache","category":"inference","prompt":"Context: Prefix caching reuses repeated prompt prefixes. Return only compact JSON with key answer naming what is reused.","expected_contains":["prefix"],"require_json":true}

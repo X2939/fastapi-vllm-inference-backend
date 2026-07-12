@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-07-12T03:07:05.897408+00:00",
+  "backend": "real OpenAI-compatible streaming endpoint",
+  "experiment_variant": "prefix_cache_on",
+  "server_args": "--enable-prefix-caching",
+  "url": "http://127.0.0.1:8000/v1/chat/completions",
+  "model": "/home/xxx/models/Qwen2.5-1.5B-Instruct",
+  "prompt_type": "long",
+  "prompt_mode": "shared_prefix",
+  "concurrency": [
+    1,
+    2,
+    4
+  ],
+  "requests_per_level": 16,
+  "warmup": 3,
+  "runs": 3,
+  "max_tokens": 64,
+  "notes": "TPOT uses (E2E - TTFT) / (completion_tokens - 1).",
+  "environment": {
+    "python": "3.10.12",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "packages": {
+      "vllm": "0.19.0",
+      "torch": "2.10.0",
+      "requests": "2.33.1"
+    },
+    "nvidia_smi": {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total",
+        "--format=csv,noheader"
+      ],
+      "returncode": 0,
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144 MiB",
+      "stderr": ""
+    },
+    "torch_cuda": {
+      "available": true,
+      "cuda_version": "12.8",
+      "device": "NVIDIA GeForce RTX 3060 Laptop GPU"
+    }
+  }
+}
