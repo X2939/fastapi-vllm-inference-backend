@@ -30,3 +30,10 @@ Thumbs.db
 /docs/private/
 
 *.log
+
+# Local torch-profiler traces and machine-specific metadata.
+reports/awq_profile_*/**/traces/
+reports/awq_profile_*/**/metadata.json
+reports/awq_profile_*/**/power_samples.csv
+reports/awq_profile_*/analysis.json
+reports/awq_profile_*/session.json

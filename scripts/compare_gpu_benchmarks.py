@@ -58,11 +58,16 @@ def _write_report(
     after_meta: dict,
     before: dict[int, dict[str, float]],
     after: dict[int, dict[str, float]],
+    *,
+    title: str,
+    before_label: str,
+    after_label: str,
+    interpretation: str,
 ) -> None:
     lines = [
-        "# Prefix Cache Real GPU A/B",
+        f"# {title}",
         "",
-        "> Positive delta means the ON value is higher than OFF. For TTFT, TPOT and E2E latency, a negative delta is an improvement.",
+        f"> Positive delta means the {after_label} value is higher than {before_label}. For TTFT, TPOT and E2E latency, a negative delta is an improvement.",
         "",
         "## Controlled Variables",
         "",
@@ -70,8 +75,8 @@ def _write_report(
     lines.extend(f"- `{key}`: `{before_meta[key]}`" for key in WORKLOAD_KEYS)
     lines.extend(
         [
-            f"- OFF server args: `{before_meta.get('server_args', '')}`",
-            f"- ON server args: `{after_meta.get('server_args', '')}`",
+            f"- {before_label} server args: `{before_meta.get('server_args', '')}`",
+            f"- {after_label} server args: `{after_meta.get('server_args', '')}`",
             "",
             "## Results",
             "",
@@ -103,13 +108,21 @@ def _write_report(
             "",
             "## Interpretation Boundary",
             "",
-            "Prefix Cache skips repeated prefill work, so TTFT is its primary expected benefit. TPOT mainly reflects decode work and should not be presented as a direct Prefix Cache gain. Throughput and E2E latency depend on scheduler batch composition, cache lookup overhead and the host/GPU runtime; they must be interpreted from the measured deltas rather than assumed.",
+            interpretation,
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_plot(path: Path, before: dict[int, dict[str, float]], after: dict[int, dict[str, float]]) -> None:
+def _write_plot(
+    path: Path,
+    before: dict[int, dict[str, float]],
+    after: dict[int, dict[str, float]],
+    *,
+    title: str,
+    before_label: str,
+    after_label: str,
+) -> None:
     concurrencies = sorted(before)
     figure, axes = plt.subplots(2, 2, figsize=(10, 7))
     chart_metrics = (
@@ -121,14 +134,14 @@ def _write_plot(path: Path, before: dict[int, dict[str, float]], after: dict[int
     for axis, (metric, label, scale) in zip(axes.flat, chart_metrics):
         x = list(range(len(concurrencies)))
         width = 0.36
-        axis.bar([item - width / 2 for item in x], [before[c][metric] * scale for c in concurrencies], width, label="Prefix Cache OFF")
-        axis.bar([item + width / 2 for item in x], [after[c][metric] * scale for c in concurrencies], width, label="Prefix Cache ON")
+        axis.bar([item - width / 2 for item in x], [before[c][metric] * scale for c in concurrencies], width, label=before_label)
+        axis.bar([item + width / 2 for item in x], [after[c][metric] * scale for c in concurrencies], width, label=after_label)
         axis.set_xticks(x, [str(item) for item in concurrencies])
         axis.set_xlabel("Concurrency")
         axis.set_ylabel(label)
         axis.grid(axis="y", alpha=0.25)
     axes[0, 0].legend(loc="best")
-    figure.suptitle("Real GPU Prefix Cache A/B")
+    figure.suptitle(title)
     figure.tight_layout()
     figure.savefig(path, dpi=160)
     plt.close(figure)
@@ -136,9 +149,23 @@ def _write_plot(path: Path, before: dict[int, dict[str, float]], after: dict[int
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare two GPU benchmark directories.")
-    parser.add_argument("--before", required=True, help="Prefix Cache OFF artifact directory")
-    parser.add_argument("--after", required=True, help="Prefix Cache ON artifact directory")
+    parser.add_argument("--before", required=True, help="Baseline artifact directory")
+    parser.add_argument("--after", required=True, help="Optimized artifact directory")
     parser.add_argument("--output-dir", default="reports/gpu_prefix_cache_comparison")
+    parser.add_argument("--title", default="Prefix Cache Real GPU A/B")
+    parser.add_argument("--before-label", default="Prefix Cache OFF")
+    parser.add_argument("--after-label", default="Prefix Cache ON")
+    parser.add_argument("--plot-name", default="prefix_cache_ab_comparison.png")
+    parser.add_argument(
+        "--interpretation",
+        default=(
+            "Prefix Cache skips repeated prefill work, so TTFT is its primary expected "
+            "benefit. TPOT mainly reflects decode work and should not be presented as a "
+            "direct Prefix Cache gain. Throughput and E2E latency depend on scheduler "
+            "batch composition, cache lookup overhead and the host/GPU runtime; they "
+            "must be interpreted from the measured deltas rather than assumed."
+        ),
+    )
     args = parser.parse_args()
 
     before_meta, before_rows = _read_artifact(Path(args.before))
@@ -153,10 +180,27 @@ def main() -> None:
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    _write_report(output_dir / "REPORT.md", before_meta, after_meta, before, after)
-    _write_plot(output_dir / "prefix_cache_ab_comparison.png", before, after)
+    _write_report(
+        output_dir / "REPORT.md",
+        before_meta,
+        after_meta,
+        before,
+        after,
+        title=args.title,
+        before_label=args.before_label,
+        after_label=args.after_label,
+        interpretation=args.interpretation,
+    )
+    _write_plot(
+        output_dir / args.plot_name,
+        before,
+        after,
+        title=args.title,
+        before_label=args.before_label,
+        after_label=args.after_label,
+    )
     print(f"saved_report={output_dir / 'REPORT.md'}")
-    print(f"saved_plot={output_dir / 'prefix_cache_ab_comparison.png'}")
+    print(f"saved_plot={output_dir / args.plot_name}")
 
 
 if __name__ == "__main__":

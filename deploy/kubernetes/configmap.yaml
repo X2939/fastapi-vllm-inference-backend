@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vllm-config
+  namespace: vllm
+data:
+  MODEL_NAME: /models/Qwen2.5-1.5B-Instruct
+  VLLM_BASE_URL: http://vllm-server.vllm.svc.cluster.local:8000/v1
+  SYSTEM_PROMPT: You are a concise assistant.

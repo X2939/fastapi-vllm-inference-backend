@@ -16,14 +16,14 @@
 
 | Backend | Seq | Success | P95 latency (ms) | Peak memory (MiB) | Max abs diff vs math | Error |
 |---|---:|---:|---:|---:|---:|---|
-| math | 128 | True | 1.702 | 10.8 | 0 |  |
-| flash | 128 | True | 0.120 | 9.1 | 0.0009766 |  |
-| math | 256 | True | 0.916 | 16.0 | 0 |  |
-| flash | 256 | True | 0.117 | 10.1 | 0.0009766 |  |
-| math | 512 | True | 1.085 | 33.4 | 0 |  |
-| flash | 512 | True | 0.128 | 12.1 | 0.0009766 |  |
-| math | 1024 | True | 2.966 | 96.6 | 0 |  |
-| flash | 1024 | True | 0.189 | 16.2 | 0.0009766 |  |
+| math | 128 | True | 0.759 | 10.8 | 0 |  |
+| flash | 128 | True | 0.146 | 9.1 | 0.0009766 |  |
+| math | 256 | True | 0.744 | 16.0 | 0 |  |
+| flash | 256 | True | 0.152 | 10.1 | 0.0009766 |  |
+| math | 512 | True | 1.032 | 33.4 | 0 |  |
+| flash | 512 | True | 0.198 | 12.1 | 0.0009766 |  |
+| math | 1024 | True | 2.553 | 96.6 | 0 |  |
+| flash | 1024 | True | 0.336 | 16.2 | 0.0009766 |  |
 
 ## How to Read It
 

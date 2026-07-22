@@ -1,0 +1,2 @@
+run,concurrency,requests,warmup,prompt_type,prompt_mode,max_tokens,success,failed,error_rate,wall_time,throughput,tokens_per_second,avg_prompt_tokens,avg_completion_tokens,p50_latency,p95_latency,p50_ttft,p95_ttft,p50_tpot,p95_tpot,usage_complete,first_error
+1,1,2,0,medium,unique,16,2,0,0.0,2.63472122100211,0.7590935936817274,12.145497498907638,55,16,1.3168868654993275,2.2448953618501033,0.7591546714993456,1.4134488156503722,0.03718214626666547,0.05542976974664876,True,

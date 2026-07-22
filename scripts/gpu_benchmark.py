@@ -129,10 +129,32 @@ def _models_url(chat_completions_url: str) -> str:
     return chat_completions_url.rstrip("/").removesuffix(suffix) + "/models"
 
 
-def _check_server(url: str, api_key: str | None, timeout: int) -> None:
+def _check_server(url: str, api_key: str | None, timeout: int) -> list[str]:
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
     response = requests.get(_models_url(url), headers=headers, timeout=timeout)
     response.raise_for_status()
+    payload = response.json()
+    models = payload.get("data", []) if isinstance(payload, dict) else []
+    model_ids = [item.get("id") for item in models if isinstance(item, dict)]
+    return [model_id for model_id in model_ids if isinstance(model_id, str) and model_id]
+
+
+def _resolve_model_id(requested_model: str, served_models: list[str]) -> tuple[str, str]:
+    """Resolve a host-path / container-path difference without hiding it.
+
+    A vLLM server may expose a different model id than the path used to launch
+    the benchmark. For example, a host model path can be mounted as `/models`
+    inside a Kubernetes Pod. When exactly one model is served, use that id and
+    record the rewrite. Multiple served models remain an explicit error.
+    """
+    if requested_model in served_models:
+        return requested_model, "requested_model_matches_server"
+    if len(served_models) == 1:
+        return served_models[0], "rewritten_to_single_server_model"
+    available = ", ".join(served_models) or "none"
+    raise ValueError(
+        f"requested model {requested_model!r} is not served; available model ids: {available}"
+    )
 
 
 def _mean(rows: list[dict], field: str) -> float:
@@ -221,7 +243,7 @@ def main() -> None:
     )
     parser.add_argument("--url", default="http://127.0.0.1:8000/v1/chat/completions")
     parser.add_argument("--model", default=os.getenv("MODEL_NAME"))
-    parser.add_argument("--prompt-type", choices=["short", "medium", "long"], default="medium")
+    parser.add_argument("--prompt-type", choices=["short", "medium", "long", "mixed"], default="medium")
     parser.add_argument("--prompt-mode", choices=[mode.value for mode in PromptMode], default="unique")
     parser.add_argument("--concurrency", type=_concurrencies, default=[1, 2, 4])
     parser.add_argument("--requests", type=int, default=20)
@@ -245,9 +267,18 @@ def main() -> None:
         parser.error("requests and max-tokens must be positive; warmup cannot be negative")
 
     try:
-        _check_server(args.url, args.api_key or None, min(args.timeout, 15))
+        served_models = _check_server(args.url, args.api_key or None, min(args.timeout, 15))
+        resolved_model, model_resolution = _resolve_model_id(args.model, served_models)
     except (requests.RequestException, ValueError) as exc:
         parser.error(f"vLLM endpoint preflight failed: {exc}")
+    if resolved_model != args.model:
+        print(
+            "model_id_rewritten requested={requested!r} served={served!r} "
+            "reason={reason}".format(
+                requested=args.model, served=resolved_model, reason=model_resolution
+            ),
+            flush=True,
+        )
 
     environment_before = _environment_snapshot()
     summaries: list[dict] = []
@@ -256,7 +287,7 @@ def main() -> None:
     for run in range(1, args.runs + 1):
         for concurrency in args.concurrency:
             summary, case_records = run_stream_case(
-                url=args.url, model=args.model, api_key=args.api_key or None,
+                url=args.url, model=resolved_model, api_key=args.api_key or None,
                 prompt_type=args.prompt_type, prompt_mode=mode, concurrency=concurrency,
                 requests_count=args.requests, max_tokens=args.max_tokens,
                 timeout=args.timeout, warmup=args.warmup,
@@ -287,7 +318,10 @@ def main() -> None:
         "experiment_variant": args.experiment_variant,
         "server_args": args.server_args,
         "url": args.url,
-        "model": args.model,
+        "model": resolved_model,
+        "requested_model": args.model,
+        "served_models": served_models,
+        "model_resolution": model_resolution,
         "prompt_type": args.prompt_type,
         "prompt_mode": args.prompt_mode,
         "concurrency": args.concurrency,

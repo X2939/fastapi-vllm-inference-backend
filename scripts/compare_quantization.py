@@ -5,14 +5,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import sys
 from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-
-if __package__ in {None, ""}:
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 WORKLOAD_KEYS = (
@@ -64,6 +60,11 @@ def _memory_after(metadata: dict) -> str:
     return str(stdout) if stdout else "unavailable"
 
 
+def _variant_label(metadata: dict) -> str:
+    variant = str(metadata.get("experiment_variant", "awq"))
+    return "AWQ-Marlin" if "marlin" in variant.lower() else "AWQ"
+
+
 def _write_report(
     path: Path,
     bf16_meta: dict,
@@ -71,10 +72,14 @@ def _write_report(
     bf16: dict[int, dict[str, float]],
     awq: dict[int, dict[str, float]],
 ) -> None:
+    awq_label = _variant_label(awq_meta)
     lines = [
-        "# BF16 vs AWQ Real GPU Comparison",
+        f"# BF16 vs {awq_label} Real GPU Comparison",
         "",
-        "> Positive delta means the AWQ value is higher than BF16. For TTFT, TPOT and E2E latency, a negative delta is an improvement.",
+        (
+            f"> Positive delta means the {awq_label} value is higher than BF16. "
+            "For TTFT, TPOT and E2E latency, a negative delta is an improvement."
+        ),
         "",
         "## Controlled Variables",
         "",
@@ -91,7 +96,12 @@ def _write_report(
             "",
             "## Results",
             "",
-            "| Concurrency | Tokens/s BF16 → AWQ | Δ | P95 TTFT BF16 → AWQ | Δ | P95 TPOT BF16 → AWQ | Δ | P95 E2E BF16 → AWQ | Δ |",
+            (
+                f"| Concurrency | Tokens/s BF16 -> {awq_label} | Delta | "
+                f"P95 TTFT BF16 -> {awq_label} | Delta | "
+                f"P95 TPOT BF16 -> {awq_label} | Delta | "
+                f"P95 E2E BF16 -> {awq_label} | Delta |"
+            ),
             "|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
@@ -99,10 +109,10 @@ def _write_report(
         base = bf16[concurrency]
         quantized = awq[concurrency]
         lines.append(
-            "| {c} | {b_tokens:.2f} → {a_tokens:.2f} | {d_tokens:+.1f}% | "
-            "{b_ttft:.1f} → {a_ttft:.1f} ms | {d_ttft:+.1f}% | "
-            "{b_tpot:.2f} → {a_tpot:.2f} ms | {d_tpot:+.1f}% | "
-            "{b_e2e:.1f} → {a_e2e:.1f} ms | {d_e2e:+.1f}% |".format(
+            "| {c} | {b_tokens:.2f} -> {a_tokens:.2f} | {d_tokens:+.1f}% | "
+            "{b_ttft:.1f} -> {a_ttft:.1f} ms | {d_ttft:+.1f}% | "
+            "{b_tpot:.2f} -> {a_tpot:.2f} ms | {d_tpot:+.1f}% | "
+            "{b_e2e:.1f} -> {a_e2e:.1f} ms | {d_e2e:+.1f}% |".format(
                 c=concurrency,
                 b_tokens=base["tokens_per_second"],
                 a_tokens=quantized["tokens_per_second"],
@@ -118,18 +128,52 @@ def _write_report(
                 d_e2e=_change(base["p95_latency"], quantized["p95_latency"]),
             )
         )
+
+    concurrencies = sorted(bf16)
+    throughput_changes = [
+        _change(bf16[c]["tokens_per_second"], awq[c]["tokens_per_second"])
+        for c in concurrencies
+    ]
+    tpot_changes = [_change(bf16[c]["p95_tpot"], awq[c]["p95_tpot"]) for c in concurrencies]
+    e2e_changes = [_change(bf16[c]["p95_latency"], awq[c]["p95_latency"]) for c in concurrencies]
+    ttft_changes = [_change(bf16[c]["p95_ttft"], awq[c]["p95_ttft"]) for c in concurrencies]
     lines.extend(
         [
             "",
+            "## Findings",
+            "",
+            (
+                f"- {awq_label} changed token throughput by {min(throughput_changes):+.1f}% to "
+                f"{max(throughput_changes):+.1f}% across the tested concurrency levels."
+            ),
+            (
+                f"- P95 TPOT changed by {min(tpot_changes):+.1f}% to {max(tpot_changes):+.1f}%, "
+                f"and P95 E2E changed by {min(e2e_changes):+.1f}% to {max(e2e_changes):+.1f}%."
+            ),
+            (
+                f"- P95 TTFT was mixed ({min(ttft_changes):+.1f}% to {max(ttft_changes):+.1f}%). "
+                "A faster decode kernel can improve TPOT without guaranteeing lower prefill or queueing tail latency."
+            ),
+            "",
             "## Interpretation Boundary",
             "",
-            "AWQ reduces weight precision, but it does not shrink KV Cache at the same ratio. On this RTX 3060 Laptop GPU run, AWQ saves model weight storage but decode latency is worse because INT4 dequantization and kernel support dominate this small-batch workload. Treat this as a real tradeoff measurement, not as a blanket claim that quantization always improves throughput.",
+            (
+                "AWQ is weight-only quantization, so it does not shrink KV Cache at the same ratio. "
+                "With a fixed vLLM GPU-memory-utilization budget, lower weight memory can be reassigned "
+                "to KV capacity; similar total nvidia-smi memory after startup is therefore expected. "
+                "The result is specific to this checkpoint, backend, GPU, software stack, and workload."
+            ),
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_plot(path: Path, bf16: dict[int, dict[str, float]], awq: dict[int, dict[str, float]]) -> None:
+def _write_plot(
+    path: Path,
+    bf16: dict[int, dict[str, float]],
+    awq: dict[int, dict[str, float]],
+    awq_label: str,
+) -> None:
     concurrencies = sorted(bf16)
     figure, axes = plt.subplots(2, 2, figsize=(10, 7))
     chart_metrics = (
@@ -141,16 +185,27 @@ def _write_plot(path: Path, bf16: dict[int, dict[str, float]], awq: dict[int, di
     for axis, (metric, label, scale) in zip(axes.flat, chart_metrics):
         x = list(range(len(concurrencies)))
         width = 0.36
-        axis.bar([item - width / 2 for item in x], [bf16[c][metric] * scale for c in concurrencies], width, label="BF16")
-        axis.bar([item + width / 2 for item in x], [awq[c][metric] * scale for c in concurrencies], width, label="AWQ INT4")
+        axis.bar(
+            [item - width / 2 for item in x],
+            [bf16[c][metric] * scale for c in concurrencies],
+            width,
+            label="BF16",
+        )
+        axis.bar(
+            [item + width / 2 for item in x],
+            [awq[c][metric] * scale for c in concurrencies],
+            width,
+            label=awq_label,
+        )
         axis.set_xticks(x, [str(item) for item in concurrencies])
         axis.set_xlabel("Concurrency")
         axis.set_ylabel(label)
         axis.grid(axis="y", alpha=0.25)
     axes[0, 0].legend(loc="best")
-    figure.suptitle("Real GPU BF16 vs AWQ")
+    figure.suptitle(f"Real GPU BF16 vs {awq_label}")
     figure.tight_layout()
     figure.savefig(path, dpi=160)
+    figure.savefig(path.with_suffix(".svg"))
     plt.close(figure)
 
 
@@ -174,9 +229,11 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_report(output_dir / "REPORT.md", bf16_meta, awq_meta, bf16, awq)
-    _write_plot(output_dir / "bf16_vs_awq.png", bf16, awq)
+    plot_path = output_dir / "bf16_vs_awq.png"
+    _write_plot(plot_path, bf16, awq, _variant_label(awq_meta))
     print(f"saved_report={output_dir / 'REPORT.md'}")
-    print(f"saved_plot={output_dir / 'bf16_vs_awq.png'}")
+    print(f"saved_plot={plot_path}")
+    print(f"saved_vector_plot={plot_path.with_suffix('.svg')}")
 
 
 if __name__ == "__main__":

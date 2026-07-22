@@ -10,7 +10,7 @@
 ## 项目能力
 
 - 一条命令完成 4 组实验并生成 4 张图。
-- 一次落在真实执行路径上的优化：Prefix Cache 命中后跳过重复 prefill 计算。
+- 一次真实 vLLM GPU 优化闭环：Prefix Cache OFF/ON A/B 验证 shared-prefix 场景下的 TTFT 变化。
 - vLLM-style 组件边界：Scheduler、Executor/ModelRunner、BlockAllocator、BlockManager、PrefixCache、KVCacheManager。
 - 完整请求链路：API、SchedulerOutput、Worker、ModelRunnerOutput、Paged KV Cache、Metrics。
 - TTFT、TPOT、吞吐和 P95 的定义、数据与原因分析。
@@ -21,7 +21,7 @@
 
 ```bash
 git clone <your-repository-url>
-cd vllm-demo
+cd vllm-inference-optimization-lab
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -47,7 +47,7 @@ Plots:  4 PNG files
 - [`REPORT.md`](reports/benchmark_suite/REPORT.md)：自动生成的结论。
 - [`summary.csv`](reports/benchmark_suite/summary.csv)：适合继续分析的明细。
 - [`summary.json`](reports/benchmark_suite/summary.json)：包含环境与结构化结果。
-- 4 张 PNG：Scheduler、Prefix Cache、Chunked Prefill、PagedAttention。
+- 4 张 PNG：Scheduler、Prefix Cache 机制回归、Chunked Prefill、PagedAttention。
 
 如果系统没有 `make`，等价命令是：
 
@@ -69,6 +69,7 @@ python3 -m benchmarks.runner
 | HF PyTorch baseline | 无需服务 | `make benchmark-hf` + `make compare-hf-vllm` | `reports/hf_benchmark/`、`reports/hf_vs_vllm_comparison/` | 对比本地框架推理与 vLLM serving |
 | Attention Kernel Probe | 无需服务 | `make attention-kernel-probe` | `reports/attention_kernel_probe/` | 对比 PyTorch SDPA math/flash 后端 |
 | Prefix Cache OFF/ON | `make serve-vllm SERVER_EXTRA_ARGS=...` | `make benchmark-prefix-cache` + `make compare-prefix-cache` | `reports/gpu_prefix_cache_*` | 验证 prefill 复用对 TTFT 的影响 |
+| Chunked Prefill OFF/ON | `make serve-vllm SERVER_EXTRA_ARGS=...` | `make benchmark-chunked-prefill` + `make compare-chunked-prefill` | `reports/gpu_chunked_prefill_*` | 验证长/短 prompt 混合场景下的调度影响 |
 | AWQ INT4 | `make serve-vllm-awq` | `make benchmark-awq` + `make compare-awq` | `reports/gpu_awq/`、`reports/gpu_quantization_comparison/` | 对比量化后的吞吐、延迟和显存 |
 | Quality smoke | 使用对应服务 | `make quality-smoke-bf16` / `make quality-smoke-awq` / `make compare-quality` | `reports/quality_smoke_*` | 固定 prompt 回归，不作为正式准确率评测 |
 
@@ -100,6 +101,23 @@ make benchmark-gpu GPU_BENCH_CONCURRENCY=1,2,4,8 GPU_BENCH_REQUESTS=30 GPU_BENCH
 
 `TPOT = (E2E - TTFT) / (completion_tokens - 1)`；它是客户端流式请求级指标，不是 CUDA kernel 的逐 token 计时。真实结论必须连同 `metadata.json`、原始 CSV 和 workload 一起保存。
 
+#### Benchmark an in-cluster vLLM service
+
+When the vLLM server is already running in the local K3s cluster, do not start
+a second host-side vLLM process on the same GPU. Forward the vLLM Service in
+one terminal, then use the same benchmark command in another:
+
+```bash
+kubectl port-forward -n vllm svc/vllm-server 8000:8000
+make benchmark-gpu
+```
+
+The benchmark preflight reads `/v1/models`. If a single served model uses a
+container path that differs from the local launch path (for example,
+`/models/...` instead of `/home/...`), the benchmark prints the rewrite and
+records both ids in `metadata.json`; it does not silently emit an all-failed
+zero-valued report.
+
 已存在的 CSV 可不重跑模型而重新渲染图表：
 
 ```bash
@@ -129,7 +147,14 @@ make attention-kernel-probe
 
 ### Prefill/Decode Disaggregation Study
 
-为了覆盖真实推理平台常见的扩展方向，项目补充了 PD 分离设计说明。它解释 prefill 与 decode 的资源特征差异、KV transfer 为什么是核心难点，以及它和 Scheduler、Prefix Cache、PagedAttention-style block 管理的关系。当前仓库不实现多节点 PD serving；该部分作为面试扩展边界和后续路线，见 [`docs/pd_disaggregation.md`](docs/pd_disaggregation.md)。
+为了覆盖真实推理平台常见的扩展方向，项目补充了 PD 分离设计说明。它解释 prefill 与 decode 的资源特征差异、KV transfer 为什么是核心难点，以及它和 Scheduler、Prefix Cache、PagedAttention-style block 管理的关系。当前仓库不实现多节点 PD serving；该文档用于明确当前实现边界和后续路线，见 [`docs/pd_disaggregation.md`](docs/pd_disaggregation.md)。
+
+### Kubernetes GPU Deployment
+
+项目包含 API、单 GPU vLLM、Service、Namespace、ResourceQuota 和
+Prometheus 的 Kubernetes 部署配置，见 [`deploy/kubernetes`](deploy/kubernetes/)。本仓库已在 WSL 的单节点 K3s 上实际验证 NVIDIA device plugin、`nvidia.com/gpu` 资源注册、GPU Pod、vLLM 服务和 API → vLLM 的集群内调用；可复现命令、环境和验证输出见 [`docs/kubernetes_gpu_validation.md`](docs/kubernetes_gpu_validation.md)。
+
+该验证覆盖单节点 GPU 服务的封装、调度、健康检查、服务发现与基础监控；不将其表述为多节点生产集群运维经验。
 
 ### Prefix Cache A/B
 
@@ -155,15 +180,49 @@ make benchmark-prefix-cache GPU_PREFIX_OUTPUT=reports/gpu_prefix_cache_on GPU_PR
 make compare-prefix-cache
 ```
 
+当前 RTX 3060 Laptop GPU 上的 shared-prefix 实测结果显示，并发 4 时 P95 TTFT 从 176.6 ms 降到 64.9 ms，下降 63.3%。该结论只用于说明相同硬件、相同 workload 下的相对变化；它不代表 unique-prefix 场景，也不代表所有 GPU 上的绝对性能。
+
+### Chunked Prefill A/B
+
+Chunked Prefill 适合用长/短 prompt 混合 workload 验证，而不是只看同长度请求。关闭 chunked prefill 的服务：
+
+```bash
+make serve-vllm SERVER_EXTRA_ARGS="--no-enable-chunked-prefill --max-num-batched-tokens 256"
+make benchmark-chunked-prefill GPU_CHUNKED_OUTPUT=reports/gpu_chunked_prefill_off GPU_CHUNKED_VARIANT=chunked_prefill_off GPU_CHUNKED_SERVER_ARGS="--no-enable-chunked-prefill --max-num-batched-tokens 256"
+```
+
+停止该服务后，启用 chunked prefill 并保持同样 token budget：
+
+```bash
+make serve-vllm SERVER_EXTRA_ARGS="--enable-chunked-prefill --max-num-batched-tokens 256"
+make benchmark-chunked-prefill GPU_CHUNKED_OUTPUT=reports/gpu_chunked_prefill_on GPU_CHUNKED_VARIANT=chunked_prefill_on GPU_CHUNKED_SERVER_ARGS="--enable-chunked-prefill --max-num-batched-tokens 256"
+```
+
+完成两次运行后生成对比报告：
+
+```bash
+make compare-chunked-prefill
+```
+
+该实验使用 `mixed` prompt：每 4 个请求中 1 个长 prompt、3 个短 prompt。预期观察点不是“总计算减少”，而是长 prefill 被切分后，decode 和短请求是否更少被阻塞；TTFT、TPOT、P95 和吞吐需要一起解释。
+
 ### AWQ INT4 对照
 
-同模型家族的 AWQ 权重可作为权重压缩对照；启动时显式记录 `--quantization awq`，再运行与 BF16 baseline 相同的 workload：
+同模型家族的 AWQ 权重可作为权重压缩对照。当前检查点支持 AWQ-Marlin，因此服务使用 `--quantization awq_marlin`；不要显式强制普通 `awq` backend，否则 vLLM 会绕开兼容的 Marlin kernel：
 
 ```bash
 make serve-vllm-awq
 make benchmark-awq
 make compare-awq
 ```
+
+若需要定位量化 kernel，而不是只观察端到端指标，可在没有其他 GPU 服务占用设备时一条命令完成 BF16、普通 AWQ 与 AWQ-Marlin 的匹配 profile：
+
+```bash
+make profile-awq
+```
+
+根因报告位于 `reports/awq_profile_20260722/`。在当前环境中，普通 AWQ 的 `dequantize_weights` kernel 占其 CUDA kernel 时间的 69.4%；改用 AWQ-Marlin 后，该 decode-focused trace 的总 CUDA kernel 时间较普通 AWQ 下降 88.6%。
 
 AWQ 的比较需要同时报告显存、最大稳定并发、TTFT、TPOT、吞吐和输出质量。固定 prompt 的回归 smoke 可在对应服务启动后执行：
 
@@ -173,7 +232,9 @@ make quality-smoke-awq
 make compare-quality
 ```
 
-当前 RTX 3060 Laptop GPU 的实测结果位于 `reports/gpu_quantization_comparison/`：AWQ INT4 在该 workload 下吞吐低于 BF16，P95 TPOT 和 E2E latency 更高；质量 smoke 中 BF16 与 AWQ 都是 90% pass。权重压缩不代表 KV Cache 按同一比例缩小，且 INT4 的反量化开销可能使小 batch 的吞吐不升反降。
+历史普通 AWQ backend 的实测结果位于 `reports/gpu_quantization_comparison/`：该 workload 下吞吐低于 BF16，P95 TPOT 和 E2E latency 更高。后续 profile 已确认这是显式 `--quantization awq` 强制普通反量化路径导致的 backend 选择问题，而不是 AWQ 的普遍结论。
+
+修复后的三轮 matched benchmark 位于 `reports/gpu_quantization_marlin_comparison/`。在并发 1/2/4 下，AWQ-Marlin 相对 BF16 的 token throughput 分别提升 95.8%/105.4%/109.1%，P95 TPOT 分别下降 48.6%/47.3%/52.9%，P95 E2E 分别下降 47.8%/45.1%/52.4%。P95 TTFT 并未一致改善：并发 2 下从 52.1 ms 上升到 96.5 ms，说明 decode kernel 加速不能直接推出 prefill/排队尾延迟同步下降。质量 smoke 中 BF16 与 AWQ 都是 90% pass；权重压缩也不代表 KV Cache 按同一比例缩小。
 
 ## Benchmark 结果快照
 
@@ -182,15 +243,17 @@ make compare-quality
 | 实验 | Baseline | Optimized / 对照 | 观察 |
 |---|---:|---:|---|
 | Scheduler 并发 1 → 8 | ≈1321 tok/s | ≈5514 tok/s | batch 并行度提高，队列更快排空 |
-| Prefix Cache OFF → ON | ≈5046 tok/s | ≈10300 tok/s | 吞吐约 +104% |
-| Prefix Cache 平均 TTFT | ≈40.0 ms | ≈15.2 ms | TTFT 约 -62% |
-| Prefix Cache P95 latency | ≈50.2 ms | ≈24.6 ms | P95 约 -51% |
+| Prefix Cache 机制回归 OFF → ON | ≈5046 tok/s | ≈10300 tok/s | 验证 cached prefill token 会被跳过 |
+| Prefix Cache 机制回归平均 TTFT | ≈40.0 ms | ≈15.2 ms | 机制回归，不作为 GPU 性能结论 |
+| Prefix Cache 机制回归 P95 latency | ≈50.2 ms | ≈24.6 ms | 真实结论以 GPU Prefix A/B 为准 |
 | Standard → Chunked Prefill | 短请求 TTFT ≈48.3 ms | ≈19.2 ms | 短请求 TTFT 约 -60% |
 | KV block 8 → 64 | 碎片率 0.9% | 17.4% | 小 block 省显存，大 block 元数据少 |
 
 ![Prefix Cache 优化前后](reports/benchmark_suite/prefix_cache_optimization.png)
 
-## 一次真实优化：Prefix Cache 不只省显存，也省计算
+## CPU 机制回归：Prefix Cache 不只省显存，也省计算
+
+这一节验证自研 vLLM-style engine 的组件边界是否正确：Prefix Cache 命中后，`SchedulerOutput` 会把可复用 token 传给 `ModelRunner`，使成本模型跳过重复 prefill。它不是项目对外的真实性能主结论；真实优化闭环见上面的 **Prefix Cache A/B**。
 
 ### 优化前
 
@@ -264,7 +327,7 @@ flowchart LR
 
 ![Prefix Cache A/B](reports/benchmark_suite/prefix_cache_optimization.png)
 
-这是本项目的“真实优化前后数据”，不是只换配置的对照。
+这是 CPU 成本模型中的机制回归；项目的真实优化前后数据见 GPU Prefix Cache A/B。
 
 ### 3. Chunked Prefill
 
@@ -349,7 +412,7 @@ physical block pool:     [3] ... [17] ... [42]
 - PD 分离目前是架构学习文档，没有实现独立 prefill/decode worker、KV transfer connector、prefix-aware routing 或多节点容错。
 - ONNX / TensorRT 示例是简化模型，不等价于完整 LLM 图优化。
 - 单机单进程，没有 tensor parallel、pipeline parallel、data parallel 或多节点容错。
-- `reports/benchmark_suite` 的数据是机制回归基线；真实 GPU 结论必须重新压测。
+- `reports/benchmark_suite` 的数据是机制回归基线；Prefix Cache 和 Chunked Prefill 的真实性能结论必须看 `reports/gpu_prefix_cache_*` 与 `reports/gpu_chunked_prefill_*`。
 
 ## 可选：连接真实 vLLM 服务
 
@@ -396,10 +459,11 @@ docker compose up --build -d
 app/                    FastAPI、指标与 vLLM OpenAI client
 attention/              早期 Attention 教学示例；真实性能证据见 scripts/attention_kernel_probe.py
 benchmarks/             单命令 benchmark suite 与指标工具
-docs/                   架构说明、面试边界与扩展设计
+docs/                   架构说明、实现边界与扩展设计
 engine/                 SchedulerOutput、Worker、ModelRunner、Attention Backend、KV Cache
 experiments/            可单独运行的扩展实验
 monitoring/             Prometheus / Grafana 配置
+deploy/kubernetes/      K8s 单 GPU serving 部署样例与排障手册
 reports/                可复现报告与结果快照
 scripts/                API 压测、流式 Demo、ONNX / TensorRT 工具
 tests/                  pytest 回归测试

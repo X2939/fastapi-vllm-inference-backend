@@ -1,10 +1,15 @@
 {
-  "generated_at": "2026-07-12T08:11:03.456173+00:00",
+  "generated_at": "2026-07-20T15:51:14.407235+00:00",
   "backend": "real OpenAI-compatible streaming endpoint",
   "experiment_variant": "bf16_baseline",
   "server_args": "effective: enable_prefix_caching=true, enable_chunked_prefill=true",
   "url": "http://127.0.0.1:8000/v1/chat/completions",
   "model": "/home/xxx/models/Qwen2.5-1.5B-Instruct",
+  "requested_model": "/home/xxx/models/Qwen2.5-1.5B-Instruct",
+  "served_models": [
+    "/home/xxx/models/Qwen2.5-1.5B-Instruct"
+  ],
+  "model_resolution": "requested_model_matches_server",
   "prompt_type": "medium",
   "prompt_mode": "unique",
   "concurrency": [
@@ -32,17 +37,17 @@
         "--format=csv,noheader,nounits"
       ],
       "returncode": 0,
-      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5462, 533, 6, 40",
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5900, 95, 7, 52",
       "stderr": "",
       "gpus": [
         {
           "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
           "driver_version": "551.61",
           "memory_total_mib": 6144,
-          "memory_used_mib": 5462,
-          "memory_free_mib": 533,
-          "gpu_utilization_percent": 6,
-          "memory_utilization_percent": 40
+          "memory_used_mib": 5900,
+          "memory_free_mib": 95,
+          "gpu_utilization_percent": 7,
+          "memory_utilization_percent": 52
         }
       ]
     },
@@ -67,17 +72,17 @@
         "--format=csv,noheader,nounits"
       ],
       "returncode": 0,
-      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5462, 533, 6, 40",
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5900, 95, 7, 52",
       "stderr": "",
       "gpus": [
         {
           "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
           "driver_version": "551.61",
           "memory_total_mib": 6144,
-          "memory_used_mib": 5462,
-          "memory_free_mib": 533,
-          "gpu_utilization_percent": 6,
-          "memory_utilization_percent": 40
+          "memory_used_mib": 5900,
+          "memory_free_mib": 95,
+          "gpu_utilization_percent": 7,
+          "memory_utilization_percent": 52
         }
       ]
     },
@@ -102,17 +107,17 @@
         "--format=csv,noheader,nounits"
       ],
       "returncode": 0,
-      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5457, 538, 99, 60",
+      "stdout": "NVIDIA GeForce RTX 3060 Laptop GPU, 551.61, 6144, 5878, 117, 99, 50",
       "stderr": "",
       "gpus": [
         {
           "name": "NVIDIA GeForce RTX 3060 Laptop GPU",
           "driver_version": "551.61",
           "memory_total_mib": 6144,
-          "memory_used_mib": 5457,
-          "memory_free_mib": 538,
+          "memory_used_mib": 5878,
+          "memory_free_mib": 117,
           "gpu_utilization_percent": 99,
-          "memory_utilization_percent": 60
+          "memory_utilization_percent": 50
         }
       ]
     },

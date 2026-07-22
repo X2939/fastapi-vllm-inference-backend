@@ -31,6 +31,18 @@ PROMPT_TEMPLATES = {
     ),
 }
 
+LONG_PREFILL_BODY = (
+    "你是一名 AI Infra 工程师。请阅读下面的推理系统设计材料，然后总结其中的调度、"
+    "KV Cache、显存管理和性能指标关系。\n"
+    "材料：vLLM 在线推理服务通常把请求分为 prefill 和 decode 两个阶段。Prefill "
+    "阶段处理输入 prompt，为每一层生成 Key/Value 并写入 KV Cache；decode 阶段每轮"
+    "只生成一个新 token，但需要读取历史 KV。Scheduler 需要在请求并发、token budget、"
+    "KV block 容量和服务延迟之间做权衡。PagedAttention 风格的 block table 让逻辑"
+    "序列连续而物理 block 不连续，从而减少外部碎片。Prefix Cache 可以复用共享前缀"
+    "的 KV block，Chunked Prefill 可以把长 prompt 拆成多个 chunk，让短请求和 decode "
+    "请求有机会插入执行。性能分析需要同时观察 TTFT、TPOT、P95、吞吐和显存占用。\n"
+)
+
 SHARED_PREFIX_BODY = (
     "以下是一段共享前缀，用于观察相同 prompt 前缀在不同请求中的 prefill 行为。"
     "在大模型推理中，prefill 阶段会为所有输入 token 计算 KV Cache；"
@@ -57,6 +69,14 @@ def build_prompt(
     request_id: int,
     mode: PromptMode = PromptMode.UNIQUE,
 ) -> str:
+    if prompt_type == "mixed":
+        if request_id % 4 == 0:
+            repeated = "\n".join(
+                f"段落 {index}: {LONG_PREFILL_BODY}" for index in range(18)
+            )
+            return f"{repeated}\n长请求编号：{request_id}"
+        return f"{PROMPT_TEMPLATES['short']}\n短请求编号：{request_id}"
+
     base = PROMPT_TEMPLATES.get(prompt_type, PROMPT_TEMPLATES["medium"])
 
     if mode == PromptMode.SHARED_PREFIX:

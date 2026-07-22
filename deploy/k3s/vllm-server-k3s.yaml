@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-server
+  namespace: vllm
+spec:
+  template:
+    spec:
+      runtimeClassName: nvidia
+      containers:
+        - name: vllm
+          # Pin a CUDA-12-compatible vLLM release for the local RTX 3060 /
+          # Windows driver used by this single-node WSL cluster. Do not use
+          # `latest`: it can advance its bundled CUDA/PyTorch beyond the host
+          # driver's compatibility level.
+          image: vllm/vllm-openai:v0.19.0
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "4"
+              memory: 6Gi
+              nvidia.com/gpu: "1"
+      volumes:
+        - name: model-cache
+          hostPath:
+            path: /home/xxx/models
+            type: Directory

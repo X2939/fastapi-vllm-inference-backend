@@ -27,7 +27,16 @@ GPU_PREFIX_MAX_TOKENS ?= 64
 GPU_PREFIX_OUTPUT ?= reports/gpu_prefix_cache
 GPU_PREFIX_VARIANT ?= unspecified
 GPU_PREFIX_SERVER_ARGS ?=
-GPU_AWQ_OUTPUT ?= reports/gpu_awq
+GPU_CHUNKED_CONCURRENCY ?= 1,2,4
+GPU_CHUNKED_REQUESTS ?= 16
+GPU_CHUNKED_WARMUP ?= 2
+GPU_CHUNKED_RUNS ?= 3
+GPU_CHUNKED_MAX_TOKENS ?= 96
+GPU_CHUNKED_OUTPUT ?= reports/gpu_chunked_prefill
+GPU_CHUNKED_VARIANT ?= unspecified
+GPU_CHUNKED_SERVER_ARGS ?=
+GPU_AWQ_OUTPUT ?= reports/gpu_awq_marlin
+AWQ_PROFILE_OUTPUT ?= reports/awq_profile_local
 QUALITY_OUTPUT ?= reports/quality_smoke
 QUALITY_MAX_TOKENS ?= 96
 HF_BENCH_OUTPUT ?= reports/hf_benchmark
@@ -45,8 +54,8 @@ ATTN_PROBE_DTYPE ?= fp16
 ATTN_PROBE_RUNS ?= 20
 ATTN_PROBE_WARMUP ?= 5
 
-.PHONY: check test compile benchmark benchmark-gpu benchmark-hf compare-hf-vllm attention-kernel-probe benchmark-awq render-gpu-report compare-prefix-cache compare-awq quality-smoke quality-smoke-bf16 quality-smoke-awq compare-quality serve-api serve-vllm serve-vllm-awq bench stream-bench \
-	benchmark-prefix-cache experiment-baseline experiment-scheduler experiment-kv-cache compose-up compose-down compose-logs
+.PHONY: check test compile benchmark benchmark-gpu benchmark-hf compare-hf-vllm attention-kernel-probe benchmark-awq profile-awq render-gpu-report compare-prefix-cache compare-chunked-prefill compare-awq quality-smoke quality-smoke-bf16 quality-smoke-awq compare-quality serve-api serve-vllm serve-vllm-awq bench stream-bench \
+	benchmark-prefix-cache benchmark-chunked-prefill experiment-baseline experiment-scheduler experiment-kv-cache compose-up compose-down compose-logs
 
 check: compile test
 
@@ -78,7 +87,7 @@ serve-vllm-awq:
 		--api-key $(API_KEY) \
 		--gpu-memory-utilization 0.65 \
 		--max-model-len 2048 \
-		--quantization awq
+		--quantization awq_marlin
 
 benchmark-gpu:
 	$(VLLM_PYTHON) scripts/gpu_benchmark.py \
@@ -102,9 +111,18 @@ benchmark-awq:
 		--warmup $(GPU_BENCH_WARMUP) \
 		--runs $(GPU_BENCH_RUNS) \
 		--max-tokens $(GPU_BENCH_MAX_TOKENS) \
-		--experiment-variant "awq_int4" \
-		--server-args "--quantization awq" \
+		--experiment-variant "awq_marlin" \
+		--server-args "--quantization awq_marlin" \
 		--output-dir $(GPU_AWQ_OUTPUT)
+
+profile-awq:
+	$(VLLM_PYTHON) scripts/profile_vllm_quantization.py \
+		--bf16-model "$(MODEL_PATH)" \
+		--awq-model "$(MODEL_AWQ_PATH)" \
+		--vllm-bin "$(VLLM_BIN)" \
+		--output-dir "$(AWQ_PROFILE_OUTPUT)"
+	$(VLLM_PYTHON) scripts/analyze_vllm_profile.py "$(AWQ_PROFILE_OUTPUT)"
+	$(VLLM_PYTHON) scripts/plot_awq_profile.py "$(AWQ_PROFILE_OUTPUT)"
 
 benchmark-hf:
 	$(VLLM_PYTHON) scripts/hf_benchmark.py \
@@ -155,10 +173,37 @@ compare-prefix-cache:
 		--before reports/gpu_prefix_cache_off \
 		--after reports/gpu_prefix_cache_on
 
+benchmark-chunked-prefill:
+	$(VLLM_PYTHON) scripts/gpu_benchmark.py \
+		--model "$(MODEL_NAME)" \
+		--api-key "$(API_KEY)" \
+		--prompt-type mixed \
+		--prompt-mode unique \
+		--concurrency $(GPU_CHUNKED_CONCURRENCY) \
+		--requests $(GPU_CHUNKED_REQUESTS) \
+		--warmup $(GPU_CHUNKED_WARMUP) \
+		--runs $(GPU_CHUNKED_RUNS) \
+		--max-tokens $(GPU_CHUNKED_MAX_TOKENS) \
+		--experiment-variant "$(GPU_CHUNKED_VARIANT)" \
+		--server-args "$(GPU_CHUNKED_SERVER_ARGS)" \
+		--output-dir $(GPU_CHUNKED_OUTPUT)
+
+compare-chunked-prefill:
+	$(VLLM_PYTHON) scripts/compare_gpu_benchmarks.py \
+		--before reports/gpu_chunked_prefill_off \
+		--after reports/gpu_chunked_prefill_on \
+		--output-dir reports/gpu_chunked_prefill_comparison \
+		--title "Chunked Prefill Real GPU A/B" \
+		--before-label "Chunked Prefill OFF" \
+		--after-label "Chunked Prefill ON" \
+		--plot-name chunked_prefill_ab_comparison.png \
+		--interpretation "Chunked Prefill changes scheduling rather than total model math: long prefills can be split and interleaved with decode or short prompts. Its expected benefit is lower decode interference and better tail latency under mixed long/short workloads; throughput can move either direction because extra scheduler steps and different batch composition may offset the latency gain."
+
 compare-awq:
 	$(VLLM_PYTHON) scripts/compare_quantization.py \
 		--bf16 reports/gpu_benchmark \
-		--awq reports/gpu_awq
+		--awq $(GPU_AWQ_OUTPUT) \
+		--output-dir reports/gpu_quantization_marlin_comparison
 
 quality-smoke:
 	$(VLLM_PYTHON) scripts/quality_smoke.py \
