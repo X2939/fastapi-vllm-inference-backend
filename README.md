@@ -20,7 +20,7 @@
 环境要求：Linux / WSL、Python 3.10+、`make`。默认流程不需要 GPU、CUDA、模型权重或外部服务。
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/X2939/vllm-inference-optimization-lab.git
 cd vllm-inference-optimization-lab
 
 python3 -m venv .venv
@@ -35,7 +35,7 @@ make benchmark
 预期结果：
 
 ```text
-23 passed
+38 passed
 Completed 4 experiments in <若干秒>s
 Report: reports/benchmark_suite/REPORT.md
 Data:   reports/benchmark_suite/summary.csv
